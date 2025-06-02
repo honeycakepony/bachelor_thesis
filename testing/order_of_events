@@ -1,0 +1,11 @@
+PDP and PEP are set up independently
+
+PEP connects to PDP
+
+Agree on mandatory params
+-> connect
+    work hand-in-hand
+    notify about alterations -> possibly, disconnect
+
+-> abort
+    disallow connection
