@@ -5,13 +5,26 @@ from dotenv import load_dotenv
 import ipinfo
 import os
 
+# todo: count how many different JSON modules I'm using
+#       flask.jsonify, requests.post(..., json=)
+
+# todo: check this: https://stackoverflow.com/questions/12806386/is-there-any-standard-for-json-api-response-format
+# -> format for error handling
+# -> e.g. 1. Consistent JSON response structure with 'status' and 'message' fields.
+
 app = Flask(__name__)
 
+# define mandatory params for all access requests
 MANDATORY_PARAMS: set[str] = {
+    # Attack Scenario: Change of IP Address and Geolocation
     'ip_v4',
-    'geolocation'
+    'geolocation',
+
+    # Attack Scenario: Compromised User Credentials
+    'fingerprint'
 }
 
+# load API keys as environment variables
 load_dotenv()
 IPINFO_KEY = os.getenv('IPINFO_API')
 
@@ -20,10 +33,6 @@ BLOCK_LIST_COUNTIES: set[str] = {
 }
 
 json_reqeust: dict = dict()
-
-
-# todo: count how many different JSON modules I'm using
-#       flask.jsonify, requests.post(..., json=)
 
 # todo: check error codes -> stick to conventions
 @app.route('/check_mandatory_params', methods=['GET', 'POST'])
@@ -69,8 +78,12 @@ def handle_access_request():
             return jsonify('Invalid! '), 400
         match k:
             case 'ip_v4':
-                print('checking IP v4', data['subject']['properties'][k])
-                check_valid = _is_valid_geolocation(data['subject']['properties'][k])
+                # the checks consume some of my rate limiting
+                pass
+                #print('checking IP v4', data['subject']['properties'][k])
+                #check_valid = _is_valid_geolocation(data['subject']['properties'][k])
+            case _:
+                pass
 
     return jsonify('Done.'), 200
 
@@ -78,8 +91,11 @@ def handle_access_request():
 # todo: check IP and geolocation
 
 # def _check_ip() # todo
+# known vs. unknown location -> e.g. unknown location may require additional authentication
 
-# 1.0.42.211
+
+# https://ipinfo.io/dashboard
+# 1.0.42.211 -> https://lite.ip2location.com/china-ip-address-ranges
 # {'ip': '1.0.42.211', 'city': 'Shenzhen', 'region': 'Guangdong', 'country': 'CN', 'loc': '22.5455,114.0683', 'postal': '518000', 'timezone': 'Asia/Shanghai', 'country_name': 'China', 'isEU': False, 'country_flag_url': 'https://cdn.ipinfo.io/static/images/countries-flags/CN.svg', 'country_flag': {'emoji': '🇨🇳', 'unicode': 'U+1F1E8 U+1F1F3'}, 'country_currency': {'code': 'CNY', 'symbol': '¥'}, 'continent': {'code': 'AS', 'name': 'Asia'}, 'latitude': '22.5455', 'longitude': '114.0683'}
 def _is_valid_geolocation(ip: str) -> bool:
     """
