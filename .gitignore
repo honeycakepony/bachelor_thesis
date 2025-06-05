@@ -2,3 +2,4 @@
 *.xml
 .env
 testing/ToDos.txt
+testing/pdp_verbose.py

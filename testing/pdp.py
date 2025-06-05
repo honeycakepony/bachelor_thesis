@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 
 import ipinfo
 import os
+import pdp_internal as pdpi
+
+log: bool = True
 
 app = Flask(__name__)
 
@@ -33,6 +36,7 @@ json_reqeust: dict = dict()  # used for copy of last json
 
 
 # page 49-64, HTTP Status Codes https://datatracker.ietf.org/doc/html/rfc7231#section-6.2
+# https://datatracker.ietf.org/doc/html/rfc9110#name-status-codes
 @app.route('/check_mandatory_params_1', methods=['GET', 'POST'])
 def check_mandatory_params_1():
     """
@@ -58,7 +62,6 @@ def check_mandatory_params_1():
             'message': 'All mandatory parameters are present.'
         }), 200
 
-    # for status code 403, abort connection -> approach 1 only
     return jsonify({
         'status': 'Forbidden',
         'message': 'Server refuses to process request.'
@@ -96,6 +99,37 @@ def check_mandatory_params_2():
         'message': 'Insufficiently many mandatory parameters are present.'
     }), 403
 
+@app.route('/handle_access_request', methods=['GET', 'POST'])
+def handle_access_request():
+    data = request.get_json()
+    is_valid = True
+    for k in mandatory_params:
+        if not check_valid:
+            return jsonify({
+                'status': 'OK',
+                'message': 'Mandatory parameter(s) are either not present or invalid.'
+            }), 200
+
+        if log:
+            print(f'Handling access request -> checking parameter {k}')
+
+        # check parameter validity
+        if k == 'ip_v4':
+            # the checks consume some of my rate limiting
+            # print('checking IP v4', data['subject']['properties'][k])
+            # is_valid = pdpi._is_valid_geolocation(data['subject']['properties'][k])
+            pass
+        elif k == 'geolocation':
+            # the checks consume some of my rate limiting
+            pass
+        elif k == 'fingerprint':
+            pass
+
+    return jsonify({
+            'status': 'OK',
+            'message': 'All mandatory parameters are present and valid.'
+        }), 200
+
 
 # 1 June
 def _check_differences(old_data: dict, new_data: dict) -> dict:
@@ -109,46 +143,7 @@ def _check_differences(old_data: dict, new_data: dict) -> dict:
     print(diff)
 
 
-@app.route('/handle_access_request', methods=['GET', 'POST'])
-def handle_access_request():
-    data = request.get_json()
-    check_valid = True
-    for k in MANDATORY_PARAMS:
-        print(f'in handle_access_request: {k}')
-        if not check_valid:
-            return jsonify('Invalid! '), 400
-        match k:
-            case 'ip_v4':
-                # the checks consume some of my rate limiting
-                pass
-                # print('checking IP v4', data['subject']['properties'][k])
-                # check_valid = _is_valid_geolocation(data['subject']['properties'][k])
-            case _:
-                pass
 
-    return jsonify('Done.'), 200
-
-
-# def _check_ip() # todo
-# known vs. unknown location -> e.g. unknown location may require additional authentication
-
-
-# https://ipinfo.io/dashboard
-# 1.0.42.211 -> https://lite.ip2location.com/china-ip-address-ranges
-# {'ip': '1.0.42.211', 'city': 'Shenzhen', 'region': 'Guangdong', 'country': 'CN', 'loc': '22.5455,114.0683', 'postal': '518000', 'timezone': 'Asia/Shanghai', 'country_name': 'China', 'isEU': False, 'country_flag_url': 'https://cdn.ipinfo.io/static/images/countries-flags/CN.svg', 'country_flag': {'emoji': '🇨🇳', 'unicode': 'U+1F1E8 U+1F1F3'}, 'country_currency': {'code': 'CNY', 'symbol': '¥'}, 'continent': {'code': 'AS', 'name': 'Asia'}, 'latitude': '22.5455', 'longitude': '114.0683'}
-def _is_valid_geolocation(ip: str) -> bool:
-    """
-    Checks whether an IP address is contained in blocklist, i.e. whether the geolocation via lookup is considered valid.
-    :param ip: IPv4 address
-    :return: True if IP is allowed access, False if IP is on blocklist.
-    """
-    handler = ipinfo.getHandler(IPINFO_KEY)
-    details = handler.getDetails(ip)
-    # print(details.country)
-    # print(details.country_name)
-    # print(details.loc)
-    # print(details.timezone)
-    return details.country_name not in BLOCK_LIST_COUNTIES
 
 
 # 1 June

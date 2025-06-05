@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import requests
 
 URL = 'http://127.0.0.1:2109/'
@@ -8,40 +10,41 @@ path = 'handle_request'
 
 # todo: default False param or so ...
 
-### Mandatory Params
-payload = {
-    "subject": {
-        "type": "user",
-        "id": "user@mail.com",
-        "properties": {
-            "name": "Duffy",
-            "os": "iOS",
-            "os_version": "16.1",
-            "integrity_check": "True",
-            "fingerprint": "1234567890",
-            "device_check": "True",
-            "ip_v4": "122.158.6.12",
-            "geolocation": "Germany",
-            "time_system": "Sun May 18 12:02:53 CEST 2025",
-            "authentication": "True",
-            "privileges": "privileged"
+DEFAULT_PARAMS: dict = {
+    'subject': {
+        'type': 'False',
+        'id': 'False',
+        'properties': {
+            'ip_v4': 'False',
+            'geolocation': 'False',
+
+            'fingerprint': 'False',
+
+            "name": "False",
+            "os": "False",
+            "os_version": "False",
+            "integrity_check": "False",
+            "device_check": "False",
+            "time_system": "False",
+            "authentication": "False",
+            "privileges": "False"
         }
     },
 
     "resource": {
-        "type": "account",
-        "id": "42"
+        "type": "False",
+        "id": "False"
     },
 
     "action": {
-        "name": "can_read",
+        "name": "False",
         "properties": {
-            "method": "GET"
+            "method": "False"
          }
     },
 
     "context": {
-        "time": "Sun May 18 12:02:55 CEST 2025"
+        "time": f"{datetime.now(timezone.utc).isoformat()}"
     }
 }
 
