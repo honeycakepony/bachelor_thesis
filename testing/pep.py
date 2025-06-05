@@ -6,6 +6,8 @@ path = 'handle_request'
 # todo: check out requests library about JSON
 #       difference to Flask?
 
+# todo: default False param or so ...
+
 ### Mandatory Params
 payload = {
     "subject": {

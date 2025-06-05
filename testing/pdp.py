@@ -5,13 +5,6 @@ from dotenv import load_dotenv
 import ipinfo
 import os
 
-# todo: count how many different JSON modules I'm using
-#       flask.jsonify, requests.post(..., json=)
-
-# todo: check this: https://stackoverflow.com/questions/12806386/is-there-any-standard-for-json-api-response-format
-# -> format for error handling
-# -> e.g. 1. Consistent JSON response structure with 'status' and 'message' fields.
-
 app = Flask(__name__)
 
 # define mandatory params for all access requests
@@ -32,29 +25,38 @@ BLOCK_LIST_COUNTIES: set[str] = {
     'China'
 }
 
-json_reqeust: dict = dict()
+json_reqeust: dict = dict()  # used for copy of last json
 
-# todo: check error codes -> stick to conventions
-@app.route('/check_mandatory_params', methods=['GET', 'POST'])
-def check_mandatory_params():
+
+# page 49, HTTP Status Codes https://datatracker.ietf.org/doc/html/rfc7231#section-6.2
+@app.route('/check_mandatory_params_1', methods=['GET', 'POST'])
+def check_mandatory_params_1():
     """
     Check whether all mandatory params are present. This check is used for the first encounter between PEP and PDP.
+    This function models version 1 as specified in the section on 'Mandatory Parameters'.
     If so, allow connection between PEP and PDP.
     If not, abort connection.
     Note: It is possible that PEP provides more keys than PDP requires. This is okay.
     :return: JSON response
     """
     data = request.get_json()
-    json_reqeust = data
     if not data:
-        return jsonify({'Error': 'No data provided to process'}), 400
+        return jsonify({
+            'status': 'Bad Request',
+            'message': 'No data provided to process.'
+        }), 400
 
     candidate_keys = data['subject']['properties'].keys()
     if MANDATORY_PARAMS.issubset(candidate_keys):
-        return jsonify('Successful connection attempt. All mandatory parameters are present.'), 200
+        return jsonify({
+            'status': 'OK',
+            'message': 'All mandatory parameters are present.'
+        }), 200
 
-    return jsonify('Error! Not all mandatory parameters are present.'), 400
-
+    return jsonify({
+        'status': 'Forbidden',
+        'message': 'Error! Not all mandatory parameters are present.'
+    }), 403
 
 # 1 June
 def _check_differences(old_data: dict, new_data: dict) -> dict:
@@ -80,15 +82,13 @@ def handle_access_request():
             case 'ip_v4':
                 # the checks consume some of my rate limiting
                 pass
-                #print('checking IP v4', data['subject']['properties'][k])
-                #check_valid = _is_valid_geolocation(data['subject']['properties'][k])
+                # print('checking IP v4', data['subject']['properties'][k])
+                # check_valid = _is_valid_geolocation(data['subject']['properties'][k])
             case _:
                 pass
 
     return jsonify('Done.'), 200
 
-
-# todo: check IP and geolocation
 
 # def _check_ip() # todo
 # known vs. unknown location -> e.g. unknown location may require additional authentication
@@ -105,8 +105,8 @@ def _is_valid_geolocation(ip: str) -> bool:
     """
     handler = ipinfo.getHandler(IPINFO_KEY)
     details = handler.getDetails(ip)
-    #print(details.country)
-    #print(details.country_name)
+    # print(details.country)
+    # print(details.country_name)
     # print(details.loc)
     # print(details.timezone)
     return details.country_name not in BLOCK_LIST_COUNTIES
