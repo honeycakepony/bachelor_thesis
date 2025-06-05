@@ -1,3 +1,4 @@
 /preparation/*
 *.xml
 .env
+testing/ToDos.txt
