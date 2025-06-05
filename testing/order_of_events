@@ -1,11 +1,19 @@
-PDP and PEP are set up independently
+PDP and PEP are set up independently (according to network infrasturcture)
+-> mutually authenticatd
+-> up to implementation
+% DONE
 
-PEP connects to PDP
+PEP connected to PDP
+-> check for mandatory params to fit, if not, up to organisation -> e.g. due to versioning -> old PEP may not support all params
+PEP could provide more Params
 
-Agree on mandatory params
--> connect
-    work hand-in-hand
-    notify about alterations -> possibly, disconnect
+-> PEP sends access request
+-> PDP checks whether all mandatory params are present (new)
+-> PDP checks validity of mandatory params (new)
+-> PDP may request remaining params (new)
 
--> abort
+-> PEP sends change of any parameter to PDP (new)
+-> PDP follows organisation policy for change of params (new)
+    -> may trigger re-authorisation
+    -> abort
     disallow connection

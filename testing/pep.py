@@ -44,7 +44,6 @@ payload = {
 }
 
 response = requests.get(URL + 'check_mandatory_params', json=payload)
-requests.
 if response.status_code != 200:
     print(f'Server: {response.json()}')
 else:
