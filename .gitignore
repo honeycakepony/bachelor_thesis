@@ -1,5 +1,5 @@
 /preparation/*
 *.xml
 .env
-testing/ToDos.txt
-testing/pdp_verbose.py
+demonstration/ToDos.txt
+demonstration/verbose.py
