@@ -1,10 +1,5 @@
 from flask import Flask, abort, request, jsonify
 from deepdiff import DeepDiff
-from dotenv import load_dotenv
-
-import ipinfo
-import os
-import pdp_internal as pdpi
 
 log: bool = True
 
@@ -23,10 +18,6 @@ MANDATORY_PARAMS: set[str] = {
 THRESHOLD_PARAMS: float = 0.70
 
 mandatory_params: set[str] = set()
-
-# load API keys as environment variables
-load_dotenv()
-IPINFO_KEY = os.getenv('IPINFO_API')
 
 BLOCK_LIST_COUNTIES: set[str] = {
     'China'
@@ -101,34 +92,31 @@ def check_mandatory_params_2():
 
 @app.route('/handle_access_request', methods=['GET', 'POST'])
 def handle_access_request():
+    """
+    Check whether all mandatory params are present and valid. This is a wrapper function that calls all check functions.
+    Note: In a real implementation, the logic for the Trust Algortihm (TA) could be implemented here in a more
+        advanced version. This is just a placeholder.
+    :return: JSON response
+    """
     data = request.get_json()
     is_valid = True
     for k in mandatory_params:
-        if not check_valid:
-            return jsonify({
-                'status': 'OK',
-                'message': 'Mandatory parameter(s) are either not present or invalid.'
-            }), 200
-
+        if not is_valid:
+            break
         if log:
-            print(f'Handling access request -> checking parameter {k}')
+            print(f'Checking access request for mandatory parameter {k}')
+        is_valid = _is_mandatory_param_valid(k, data, log=True)
 
-        # check parameter validity
-        if k == 'ip_v4':
-            # the checks consume some of my rate limiting
-            # print('checking IP v4', data['subject']['properties'][k])
-            # is_valid = pdpi._is_valid_geolocation(data['subject']['properties'][k])
-            pass
-        elif k == 'geolocation':
-            # the checks consume some of my rate limiting
-            pass
-        elif k == 'fingerprint':
-            pass
-
-    return jsonify({
+    if is_valid:
+        return jsonify({
             'status': 'OK',
             'message': 'All mandatory parameters are present and valid.'
         }), 200
+
+    return jsonify({
+        'status': 'OK',
+        'message': 'Mandatory parameter(s) are either not present or invalid.'
+    }), 200
 
 
 # 1 June
@@ -143,15 +131,33 @@ def _check_differences(old_data: dict, new_data: dict) -> dict:
     print(diff)
 
 
-
-
-
 # 1 June
 @app.route('/check_update', methods=['GET', 'POST'])
 def check_update():
     new_data = request.get_json()
     old_data = json_reqeust
-    # todo: check differences -> only values which changed
+    # todo: cehck if mandatory param -> implement logic from dummy_check
+
+
+
+# todo: add logic for other parameters too -> e.g. resource, id ...
+def dummy_check(first_data: dict, changed_data: dict) -> bool:
+    diff_subject: dict = DeepDiff(first_data['subject'], changed_data['subject'])
+    #print(diff.affected_paths, diff, sep='\n')
+    is_valid: bool = True
+    for k in diff_subject.affected_paths:
+        if not is_valid:
+            break
+        indices: list[int] = [i for i, c in enumerate(k) if c == "'"]
+        param_to_check =  k[indices[-2]+1:indices[-1]]
+        if param_to_check in mandatory_params:
+            is_valid = _is_mandatory_param_valid(k, data, log=True)
+
+    if is_valid:
+        return True
+
+    return False
+
 
 
 """
@@ -168,4 +174,43 @@ def check_update():
 """
 
 if __name__ == '__main__':
+    dummy_check(
+        {
+            'subject': {
+                'type': 'False',
+                'id': 'False',
+                'properties': {
+                    'ip_v4': 'False',
+                    'geolocation': 'False',
+                    'fingerprint': 'False',
+                    "name": "False",
+                    "os": "False",
+                    "os_version": "False",
+                    "integrity_check": "False",
+                    "device_check": "False",
+                    "time_system": "False",
+                    "authentication": "False",
+                    "privileges": "False"
+                }
+            }}, {
+    'subject': {
+        'type': 'False',
+        'id': 'False',
+        'properties': {
+            'ip_v4': 'False',
+            'geolocation': 'True',
+
+            'fingerprint': 'True',
+
+            "name": "False",
+            "os": "False",
+            "os_version": "False",
+            "integrity_check": "False",
+            "device_check": "False",
+            "time_system": "False",
+            "authentication": "False",
+            "privileges": "False"
+        }}
+    })
+    exit(100)
     app.run(debug=True, port=2110)
