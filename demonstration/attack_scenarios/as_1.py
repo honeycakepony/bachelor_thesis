@@ -48,7 +48,7 @@ subject: dict = {
         "id": "ethan@mission−thesis.org",
         "properties": {
             "ip_v4": "110.40.0.211", # changed IP
-            "geolocation": "Germany",
+            "geolocation": "Germany", # does it detect the wrong country
         }
 }
 

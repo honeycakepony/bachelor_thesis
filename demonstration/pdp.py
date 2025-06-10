@@ -17,11 +17,9 @@ MANDATORY_PARAMS: set[str] = {
 }
 
 LOG: bool = True
-
 THRESHOLD_PARAMS: float = 0.50 # dummy value
 
 mandatory_params: set[str] = set()
-
 copy_request: dict = dict()  # used to check for changes of security posture
 
 
