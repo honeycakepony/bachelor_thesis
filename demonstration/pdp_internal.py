@@ -12,6 +12,9 @@ import ipinfo
 load_dotenv()
 IPINFO_KEY = os.getenv('IPINFO_API')
 
+BLOCK_LIST_COUNTIES: set[str] = {
+    'China'
+}
 
 def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
     """
@@ -20,36 +23,41 @@ def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
     :param data: Dict of access request
     :return: Value determined by check of policy of parameter. If check fails, return False by default..
     """
+    print(f'{data=}')
+    print(f"KeyError: root['properties']['ip_v4']: {param}")
     user_id = data['subject']['id']
-    param_to_check = data['subject']['properties'][k]
+    param_to_check = data['subject']['properties'][param]
+    print(f'{param_to_check=}')
 
     # check parameter validity
-    if key == 'ip_v4':
-        # the checks consume some of my rate limiting
+    if param == 'ip_v4':
         if log:
             print(f'Checking IP v4: {param_to_check}')
-        # return _is_valid_geolocation(param)
-    elif key == 'geolocation':
-        # the checks consume some of my rate limiting
+        return _is_valid_ip(data['subject']['id'], param_to_check)
+    elif param == 'geolocation':
         if log:
             print(f'Checking geolocation: {param_to_check}')
-        # return _is_valid_geolocation(param)
-    elif key == 'fingerprint':
+        return _is_valid_geolocation(param_to_check, data['subject']['properties']['ip_v4'])
+    elif kparamey == 'fingerprint':
         if log:
             print(f'Checking fingerprint: {param_to_check} for user {user_id}')
-        return _is_valid_fingerprint(user_id, param)
+        return _is_valid_fingerprint(user_id, param_to_check)
 
     return False
 
 
-def _is_valid_geolocation(ip: str) -> bool:
+def _is_valid_geolocation(geolocation: str, ip: str) -> bool:
     """
     Checks whether an IP address is contained in blocklist, i.e. whether the geolocation via lookup is considered valid.
+    :param geolocation: Geolocation, i.e. country, provided by subject (can be 'None')
     :param ip: IPv4 address
     :return: True if IP is allowed access, False if IP is on blocklist.
     """
     handler = ipinfo.getHandler(IPINFO_KEY)
     details = handler.getDetails(ip)
+    if geolocation:
+        if geolocation != details.country_name:
+            return False
     return details.country_name not in BLOCK_LIST_COUNTIES
 
 

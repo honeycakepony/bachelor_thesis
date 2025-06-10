@@ -6,8 +6,8 @@ subject: dict = {
         "type": "user",
         "id": "user@mail.com",
         "properties": {
-            "ip_v4": "1.0.42.211", # 217.233.97.120 my IP on 2 June
-            "geolocation": "China",
+            "ip_v4": "217.233.97.120",
+            "geolocation": "Germany",
         }
 }
 
@@ -34,14 +34,27 @@ payload: dict = {
     "context": context
 }
 
-response = requests.get(URL + 'check_mandatory_params', json=payload)
-if response.status_code != 200:
-    print(f'Server: {response.json()}')
-else:
-    print(f'Server: {response.json()}')
+response = requests.get(URL + 'check_mandatory_params_2', json=payload)
+print(response.status_code, response.json())
 
 response = requests.get(URL + 'handle_access_request', json=payload)
-if response.status_code != 200:
-    print(f'Server: {response.json()}')
-else:
-    print(f'Server: {response.json()}')
+print(response.status_code, response.json())
+
+subject: dict = {
+        "type": "user",
+        "id": "ethan@mission−thesis.org",
+        "properties": {
+            "ip_v4": "1.0.42.211", # changed IP
+            "geolocation": "Germany",
+        }
+}
+
+payload: dict = {
+    "subject": subject,
+    "resource": resource,
+    "action": action,
+    "context": context
+}
+
+response = requests.get(URL + 'check_update', json=payload)
+print(response.status_code, response.json())

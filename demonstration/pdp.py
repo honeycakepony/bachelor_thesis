@@ -1,5 +1,9 @@
 from flask import Flask, abort, request, jsonify
 from deepdiff import DeepDiff
+from pdp_internal import _is_mandatory_param_valid
+
+from copy import deepcopy
+
 
 log: bool = True
 
@@ -15,15 +19,11 @@ MANDATORY_PARAMS: set[str] = {
     'fingerprint'
 }
 
-THRESHOLD_PARAMS: float = 0.70
+THRESHOLD_PARAMS: float = 0.50 # dummy value
 
 mandatory_params: set[str] = set()
 
-BLOCK_LIST_COUNTIES: set[str] = {
-    'China'
-}
-
-json_reqeust: dict = dict()  # used for copy of last json
+copy_request: dict = dict()  # used to check for changes of security posture
 
 
 # page 49-64, HTTP Status Codes https://datatracker.ietf.org/doc/html/rfc7231#section-6.2
@@ -47,7 +47,10 @@ def check_mandatory_params_1():
 
     candidate_keys = data['subject']['properties'].keys()
     if MANDATORY_PARAMS.issubset(candidate_keys):
+        global mandatory_params
+        global copy_request
         mandatory_params = MANDATORY_PARAMS
+        copy_request = deepcopy(data)
         return jsonify({
             'status': 'OK',
             'message': 'All mandatory parameters are present.'
@@ -57,6 +60,7 @@ def check_mandatory_params_1():
         'status': 'Forbidden',
         'message': 'Server refuses to process request.'
     }), 403
+
 
 @app.route('/check_mandatory_params_2', methods=['GET', 'POST'])
 def check_mandatory_params_2():
@@ -79,6 +83,9 @@ def check_mandatory_params_2():
     # create reduced set of mandatory params.
     candidate_keys = data['subject']['properties'].keys()
     if len(MANDATORY_PARAMS & candidate_keys) >= THRESHOLD_PARAMS * len(MANDATORY_PARAMS):
+        global mandatory_params
+        global copy_request
+        copy_request = deepcopy(data)
         mandatory_params = MANDATORY_PARAMS.intersection(candidate_keys)
         return jsonify({
             'status': 'OK',
@@ -89,6 +96,7 @@ def check_mandatory_params_2():
         'status': 'Forbidden',
         'message': 'Insufficiently many mandatory parameters are present.'
     }), 403
+
 
 @app.route('/handle_access_request', methods=['GET', 'POST'])
 def handle_access_request():
@@ -119,98 +127,32 @@ def handle_access_request():
     }), 200
 
 
-# 1 June
-def _check_differences(old_data: dict, new_data: dict) -> dict:
-    """
-    Check for differences of values, i.e. detect changes in security posture.
-    :param old_data:
-    :param new_data:
-    :return:
-    """
-    diff: dict = DeepDiff(old_data, new_data)
-    print(diff)
-
-
-# 1 June
 @app.route('/check_update', methods=['GET', 'POST'])
 def check_update():
     new_data = request.get_json()
-    old_data = json_reqeust
-    # todo: cehck if mandatory param -> implement logic from dummy_check
-
-
-
-# todo: add logic for other parameters too -> e.g. resource, id ...
-def dummy_check(first_data: dict, changed_data: dict) -> bool:
-    diff_subject: dict = DeepDiff(first_data['subject'], changed_data['subject'])
-    #print(diff.affected_paths, diff, sep='\n')
+    print(f'{mandatory_params=}, {copy_request=}')
+    diff: dict = DeepDiff(new_data, copy_request)
     is_valid: bool = True
-    for k in diff_subject.affected_paths:
+    for k in diff.affected_paths:
         if not is_valid:
             break
         indices: list[int] = [i for i, c in enumerate(k) if c == "'"]
-        param_to_check =  k[indices[-2]+1:indices[-1]]
+        param_to_check: str = k[indices[-2] + 1:indices[-1]]
         if param_to_check in mandatory_params:
-            is_valid = _is_mandatory_param_valid(k, data, log=True)
+            print(f'{param_to_check=}, {mandatory_params=}')
+            is_valid = _is_mandatory_param_valid(param_to_check, new_data, log=True)
 
     if is_valid:
-        return True
+        return jsonify({
+            'status': 'OK',
+            'message': 'All mandatory parameters are present and valid.'
+        }), 200
 
-    return False
+    return jsonify({
+        'status': 'OK',
+        'message': 'Mandatory parameter(s) are either not present or invalid.'
+    }), 200
 
-
-
-"""
-    diff.affected_paths)
-    for k in diff.affected_paths:
-        start = k[:-2].rfind("'")
-        relevant_param: str = k[start+1:-2]
-        print(k, relevant_param, 'bla')
-        print(diff.get_stats())
-    for e in diff['values_changed']:
-        print(e)
-        print(diff['values_changed'][e])
-        print()
-"""
 
 if __name__ == '__main__':
-    dummy_check(
-        {
-            'subject': {
-                'type': 'False',
-                'id': 'False',
-                'properties': {
-                    'ip_v4': 'False',
-                    'geolocation': 'False',
-                    'fingerprint': 'False',
-                    "name": "False",
-                    "os": "False",
-                    "os_version": "False",
-                    "integrity_check": "False",
-                    "device_check": "False",
-                    "time_system": "False",
-                    "authentication": "False",
-                    "privileges": "False"
-                }
-            }}, {
-    'subject': {
-        'type': 'False',
-        'id': 'False',
-        'properties': {
-            'ip_v4': 'False',
-            'geolocation': 'True',
-
-            'fingerprint': 'True',
-
-            "name": "False",
-            "os": "False",
-            "os_version": "False",
-            "integrity_check": "False",
-            "device_check": "False",
-            "time_system": "False",
-            "authentication": "False",
-            "privileges": "False"
-        }}
-    })
-    exit(100)
     app.run(debug=True, port=2110)
