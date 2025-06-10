@@ -4,9 +4,6 @@ from pdp_internal import _is_mandatory_param_valid
 
 from copy import deepcopy
 
-
-log: bool = True
-
 app = Flask(__name__)
 
 # define mandatory params for all access requests
@@ -18,6 +15,8 @@ MANDATORY_PARAMS: set[str] = {
     # Attack Scenario: Compromised User Credentials
     'fingerprint'
 }
+
+LOG: bool = True
 
 THRESHOLD_PARAMS: float = 0.50 # dummy value
 
@@ -57,9 +56,9 @@ def check_mandatory_params_1():
         }), 200
 
     return jsonify({
-        'status': 'Forbidden',
-        'message': 'Server refuses to process request.'
-    }), 403
+        'status': 'OK',
+        'message': 'Mandatory parameter(s) are either not present or invalid.'
+    }), 200
 
 
 @app.route('/check_mandatory_params_2', methods=['GET', 'POST'])
@@ -93,9 +92,9 @@ def check_mandatory_params_2():
         }), 200
 
     return jsonify({
-        'status': 'Forbidden',
-        'message': 'Insufficiently many mandatory parameters are present.'
-    }), 403
+        'status': 'OK',
+        'message': 'Mandatory parameter(s) are either not present or invalid.'
+    }), 200
 
 
 @app.route('/handle_access_request', methods=['GET', 'POST'])
@@ -111,8 +110,8 @@ def handle_access_request():
     for k in mandatory_params:
         if not is_valid:
             break
-        if log:
-            print(f'Checking access request for mandatory parameter {k}')
+        if LOG:
+            print(f'Handling access request for mandatory parameter: {k} for {data['subject']['id']}')
         is_valid = _is_mandatory_param_valid(k, data, log=True)
 
     if is_valid:
@@ -130,7 +129,6 @@ def handle_access_request():
 @app.route('/check_update', methods=['GET', 'POST'])
 def check_update():
     new_data = request.get_json()
-    print(f'{mandatory_params=}, {copy_request=}')
     diff: dict = DeepDiff(new_data, copy_request)
     is_valid: bool = True
     for k in diff.affected_paths:
@@ -139,7 +137,6 @@ def check_update():
         indices: list[int] = [i for i, c in enumerate(k) if c == "'"]
         param_to_check: str = k[indices[-2] + 1:indices[-1]]
         if param_to_check in mandatory_params:
-            print(f'{param_to_check=}, {mandatory_params=}')
             is_valid = _is_mandatory_param_valid(param_to_check, new_data, log=True)
 
     if is_valid:

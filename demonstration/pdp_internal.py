@@ -23,22 +23,19 @@ def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
     :param data: Dict of access request
     :return: Value determined by check of policy of parameter. If check fails, return False by default..
     """
-    print(f'{data=}')
-    print(f"KeyError: root['properties']['ip_v4']: {param}")
     user_id = data['subject']['id']
     param_to_check = data['subject']['properties'][param]
-    print(f'{param_to_check=}')
 
     # check parameter validity
     if param == 'ip_v4':
         if log:
-            print(f'Checking IP v4: {param_to_check}')
-        return _is_valid_ip(data['subject']['id'], param_to_check)
+            print(f'_is_mandatory_param_valid: {param_to_check} for user {user_id}')
+        return _is_valid_ip(user_id, param_to_check, True)
     elif param == 'geolocation':
         if log:
             print(f'Checking geolocation: {param_to_check}')
         return _is_valid_geolocation(param_to_check, data['subject']['properties']['ip_v4'])
-    elif kparamey == 'fingerprint':
+    elif param == 'fingerprint':
         if log:
             print(f'Checking fingerprint: {param_to_check} for user {user_id}')
         return _is_valid_fingerprint(user_id, param_to_check)
@@ -46,7 +43,7 @@ def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
     return False
 
 
-def _is_valid_geolocation(geolocation: str, ip: str) -> bool:
+def _is_valid_geolocation(geolocation: str, ip: str, log=False) -> bool:
     """
     Checks whether an IP address is contained in blocklist, i.e. whether the geolocation via lookup is considered valid.
     :param geolocation: Geolocation, i.e. country, provided by subject (can be 'None')
@@ -57,11 +54,16 @@ def _is_valid_geolocation(geolocation: str, ip: str) -> bool:
     details = handler.getDetails(ip)
     if geolocation:
         if geolocation != details.country_name:
+            if log:
+                print(f'_is_valid_geolocation: {geolocation} != {details.country_name}')
             return False
+
+    if log:
+        print(f'_is_valid_geolocation: country found in blocklist? {details.country_name not in BLOCK_LIST_COUNTIES}')
     return details.country_name not in BLOCK_LIST_COUNTIES
 
 
-def _is_valid_ip(id: str, ip: str) -> bool:
+def _is_valid_ip(id: str, ip: str, log=False) -> bool:
     """
     Checks 1) whether an IP address is contained in blocklist, 2) whether IP address is known for subject.
     :param ip: ID of subject
@@ -72,18 +74,27 @@ def _is_valid_ip(id: str, ip: str) -> bool:
     with open('ipv4_placeholder_blocklist.txt') as f:
         # this logic is very roughy and is only used for its simplicity for illustrative purposes
         for line in f:
-            ip = '.'.join(ip.split('.')[0:3])
+            ip_temp = '.'.join(ip.split('.')[0:3])
             line = '.'.join(line.split('.')[0:3])
-            if ip == line:
+            if ip_temp == line:
+                if log:
+                    print(f'_is_valid_ip: IP {ip_temp} found on blocklist.\n')
                 return False
 
     # 2) lookup in database
     conn = sqlite3.connect('pdp_source_1.db')
     c = conn.cursor()
+
+    c.execute("SELECT * FROM users")
+    res = c.fetchall()
+    print(res)
+
     c.execute("SELECT ip_v4 FROM users WHERE id=? AND ip_v4=?", (id, ip))
     res = c.fetchall()
+
     for r in res:
         if ip in r:
+            print(f'_is_valid_ip: known IP {ip} found in database\n')
             conn.close()
             return True
 
@@ -106,12 +117,3 @@ def _is_valid_fingerprint(id: str, fingerprint: str) -> bool:
         conn.close()
         return True
     return False
-
-
-if __name__ == '__main__':
-    # _is_valid_ip('ethan@mission−thesis.org', '1.0.1.0')
-    # _is_valid_ip('ethan@mission−thesis.org', '1.2.64.0')
-    _is_valid_fingerprint('ethan@mission−thesis.org',
-                          '7514118a4a9aa4a0998d4e14efbfd73550bfcb08e313bb87e7f4bdd8b22a2ef4')
-    _is_valid_fingerprint('ethan@mission−thesis.org',
-                          '30cd5227e750fe8848fc32fd4683b8d66e654567c708445be76bc8fe34f2dc74')

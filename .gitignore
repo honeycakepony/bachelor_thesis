@@ -3,3 +3,5 @@
 .env
 demonstration/ToDos.txt
 demonstration/verbose.py
+/demonstration/pdp_source_1.db
+/demonstration/testing.py

@@ -4,7 +4,7 @@ URL = 'http://127.0.0.1:2110/'
 
 subject: dict = {
         "type": "user",
-        "id": "user@mail.com",
+        "id": "ethan@mission−thesis.org",
         "properties": {
             "ip_v4": "217.233.97.120",
             "geolocation": "Germany",
@@ -34,17 +34,20 @@ payload: dict = {
     "context": context
 }
 
-response = requests.get(URL + 'check_mandatory_params_2', json=payload)
+response = requests.get(URL + 'check_mandatory_params_1', json=payload)
 print(response.status_code, response.json())
 
-response = requests.get(URL + 'handle_access_request', json=payload)
+response = requests.get(URL + 'check_mandatory_params_2', json=payload)
 print(response.status_code, response.json())
+#
+# response = requests.get(URL + 'handle_access_request', json=payload)
+# print(response.status_code, response.json())
 
 subject: dict = {
         "type": "user",
         "id": "ethan@mission−thesis.org",
         "properties": {
-            "ip_v4": "1.0.42.211", # changed IP
+            "ip_v4": "110.40.0.211", # changed IP
             "geolocation": "Germany",
         }
 }
