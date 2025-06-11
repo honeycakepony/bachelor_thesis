@@ -6,7 +6,7 @@ subject: dict = {
         "type": "user",
         "id": "ethan@mission−thesis.org",
         "properties": {
-            "ip_v4": "217.233.97.120",
+            "ip_address": "217.233.97.120",
             "geolocation": "Germany",
         }
 }
@@ -47,7 +47,7 @@ subject: dict = {
         "type": "user",
         "id": "ethan@mission−thesis.org",
         "properties": {
-            "ip_v4": "110.40.0.211", # changed IP
+            "ip_address": "110.40.0.211", # changed IP
             "geolocation": "Germany", # does it detect the wrong country
         }
 }

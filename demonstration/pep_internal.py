@@ -1,3 +1,4 @@
+# todo: is 'pause' the right word choice here?
 def _pause_connection() -> None:
     """
     This is a placeholder function to simulate a pause in the connection between the PEP and subject.

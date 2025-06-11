@@ -4,7 +4,7 @@ import sqlite3
 import os
 import ipinfo
 
-# Note: The internal functionality of the helper functions is placeholder functionality and a more sophisticated
+# Note: The internal functionality of the helper functions is non-normative functionality and a more sophisticated
 #       implementation is to be expected in a real implementation.
 #       Many checks are kept simple for illustrative purposes.
 
@@ -15,6 +15,29 @@ IPINFO_KEY = os.getenv('IPINFO_API')
 BLOCK_LIST_COUNTIES: set[str] = {
     'China'
 }
+
+# Note: In a real implementation, this function would be more sophisticated since it would allow to add an 'id' to the
+# database. The attack scenarios do not contain a scenario where the 'id' needs to be added. Hence, the functionality
+# is not implemented in this non-normative function.
+def _is_id_valid(subject_id: str, subject_type: str, log=False) -> bool:
+    """
+    Check whether 'id' is known in database.
+    :param subject_id: 'id' provided by access request
+    :param subject_type: 'type' provided by access request
+    :return: True if 'id' can be found in database, False if not.
+    """
+    conn = sqlite3.connect('pdp_source_1.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE id=? AND type=?", (subject_id, subject_type))
+    res = c.fetchall()
+    print(res)
+    if len(res) > 0:
+        if log:
+            print(f'_is_id_valid: known id {subject_id} found in database\n')
+        conn.close()
+        return True
+
+    return False
 
 def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
     """
@@ -27,14 +50,14 @@ def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
     param_to_check = data['subject']['properties'][param]
 
     # check parameter validity
-    if param == 'ip_v4':
+    if param == 'ip_address':
         if log:
             print(f'_is_mandatory_param_valid: {param_to_check} for user {user_id}')
         return _is_valid_ip(user_id, param_to_check, True)
     elif param == 'geolocation':
         if log:
             print(f'Checking geolocation: {param_to_check}')
-        return _is_valid_geolocation(param_to_check, data['subject']['properties']['ip_v4'])
+        return _is_valid_geolocation(param_to_check, data['subject']['properties']['ip_address'])
     elif param == 'fingerprint':
         if log:
             print(f'Checking fingerprint: {param_to_check} for user {user_id}')
@@ -94,7 +117,8 @@ def _is_valid_ip(id: str, ip: str, log=False) -> bool:
 
     for r in res:
         if ip in r:
-            print(f'_is_valid_ip: known IP {ip} found in database\n')
+            if log:
+                print(f'_is_valid_ip: known IP {ip} found in database\n')
             conn.close()
             return True
 

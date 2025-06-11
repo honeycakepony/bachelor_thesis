@@ -1,6 +1,6 @@
 from flask import Flask, abort, request, jsonify
 from deepdiff import DeepDiff
-from pdp_internal import _is_mandatory_param_valid
+from pdp_internal import _is_mandatory_param_valid, _is_id_valid
 
 from copy import deepcopy
 
@@ -9,11 +9,16 @@ app = Flask(__name__)
 # define mandatory params for all access requests
 MANDATORY_PARAMS: set[str] = {
     # Attack Scenario: Change of IP Address and Geolocation
-    'ip_v4',
+    'ip_address',
     'geolocation',
 
     # Attack Scenario: Compromised User Credentials
     'fingerprint'
+}
+
+ALLOWED_TYPES: set[str] = {
+    'user',
+    'machine'
 }
 
 LOG: bool = True
@@ -22,6 +27,13 @@ THRESHOLD_PARAMS: float = 0.50 # dummy value
 mandatory_params: set[str] = set()
 copy_request: dict = dict()  # used to check for changes of security posture
 
+# NOTE: The http status code 401 is never used in this implementation since the means of authorisation of the API is
+# assumed and an implementation of such does not alter the findings of the juxtaposition of the parametrised and
+# non-parametrised version of the API. Therefore, this functionality is not implemented in this version.
+# Reason for status code 401:
+# "[A] 401 HTTPS status code indicates that the caller (policy enforcement point) did not properly authenticate to the
+#  PDP - for example, by omitting a required Authorization header, or using an invalid access token."
+# Source: OpenID AuthZEN, 2025, section 12.1.11. -> see Bibliography of thesis
 
 # page 49-64, HTTP Status Codes https://datatracker.ietf.org/doc/html/rfc7231#section-6.2
 # https://datatracker.ietf.org/doc/html/rfc9110#name-status-codes
@@ -41,6 +53,19 @@ def check_mandatory_params_1():
             'status': 'Bad Request',
             'message': 'No data provided to process.'
         }), 400
+
+    # guard clause for check of 'id' and 'type'
+    # Note:
+    # "type: REQUIRED. A string value that specifies the type of the Subject."
+    # "id: REQUIRED. A string value containing the unique identifier of the Subject, scoped to the type."
+    # Source: OpenID AuthZEN, 2025, section 5.1 -> see Bibliography of thesis
+    type_check: bool = data['subject']['type'] in ALLOWED_TYPES
+    id_check: bool = _is_id_valid(data['subject']['id'], data['subject']['type'], LOG)
+    if not type_check or not id_check:
+        return jsonify({
+            'status': 'Forbidden',
+            'message': 'Mandatory parameter(s) for \'id\' or \'type\' invalid.'
+        }), 403
 
     candidate_keys = data['subject']['properties'].keys()
     if MANDATORY_PARAMS.issubset(candidate_keys):
@@ -75,6 +100,15 @@ def check_mandatory_params_2():
             'status': 'Bad Request',
             'message': 'No data provided to process.'
         }), 400
+
+    # guard clause for check of 'id' and 'type' -> check explanation in check_mandatory_params_1
+    type_check: bool = data['subject']['type'] in ALLOWED_TYPES
+    id_check: bool = _is_id_valid(data['subject']['id'], data['subject']['type'], LOG)
+    if not type_check or not id_check:
+        return jsonify({
+            'status': 'Forbidden',
+            'message': 'Mandatory parameter(s) for \'id\' or \'type\' invalid.'
+        }), 403
 
     # Check for relative size of intersection. If size suffices for pre-determined threshold (THRESHOLD_PARAMS),
     # create reduced set of mandatory params.

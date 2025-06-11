@@ -16,7 +16,7 @@ DEFAULT_PARAMS: dict = {
         'type': 'False',
         'id': 'False',
         'properties': {
-            'ip_v4': 'False',
+            'ip_address': 'False',
             'geolocation': 'False',
 
             'fingerprint': 'False',
