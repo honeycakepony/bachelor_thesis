@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect('pdp_source_1.db')
+conn = sqlite3.connect('../data_sources/pdp_source_1.db')
 c = conn.cursor()
 c.execute("SELECT * FROM users")
 res = c.fetchall()

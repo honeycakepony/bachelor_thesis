@@ -79,9 +79,9 @@ def check_mandatory_params_1():
         }), 200
 
     return jsonify({
-        'status': 'OK',
-        'message': 'Mandatory parameter(s) are either not present or invalid.'
-    }), 200
+        'status': 'Forbidden',
+        'message': 'Mandatory parameter(s) for \'properties\' invalid.'
+    }), 403
 
 
 @app.route('/check_mandatory_params_2', methods=['GET', 'POST'])
@@ -124,9 +124,9 @@ def check_mandatory_params_2():
         }), 200
 
     return jsonify({
-        'status': 'OK',
-        'message': 'Mandatory parameter(s) are either not present or invalid.'
-    }), 200
+        'status': 'Forbidden',
+        'message': 'Mandatory parameter(s) for \'properties\' invalid.'
+    }), 403
 
 
 @app.route('/handle_access_request', methods=['GET', 'POST'])

@@ -26,14 +26,14 @@ def _is_id_valid(subject_id: str, subject_type: str, log=False) -> bool:
     :param subject_type: 'type' provided by access request
     :return: True if 'id' can be found in database, False if not.
     """
-    conn = sqlite3.connect('pdp_source_1.db')
+    conn = sqlite3.connect('data_sources/pdp_source_1.db')
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE id=? AND type=?", (subject_id, subject_type))
     res = c.fetchall()
     print(res)
     if len(res) > 0:
         if log:
-            print(f'_is_id_valid: known id {subject_id} found in database\n')
+            print(f'_is_id_valid: known id {subject_id } found in database\n')
         conn.close()
         return True
 
@@ -94,7 +94,7 @@ def _is_valid_ip(id: str, ip: str, log=False) -> bool:
     :return: True if IP is allowed access (known in database in this case), False if IP is on blocklist or unknown.
     """
     # 1) check against blocklist
-    with open('ipv4_placeholder_blocklist.txt') as f:
+    with open('data_sources/ipv4_placeholder_blocklist.txt') as f:
         # this logic is very roughy and is only used for its simplicity for illustrative purposes
         for line in f:
             ip_temp = '.'.join(ip.split('.')[0:3])
@@ -105,7 +105,7 @@ def _is_valid_ip(id: str, ip: str, log=False) -> bool:
                 return False
 
     # 2) lookup in database
-    conn = sqlite3.connect('pdp_source_1.db')
+    conn = sqlite3.connect('data_sources/pdp_source_1.db')
     c = conn.cursor()
 
     c.execute("SELECT * FROM users")
@@ -134,7 +134,7 @@ def _is_valid_fingerprint(id: str, fingerprint: str) -> bool:
     :param fingerprint: Fingerprint (SHA256) of system being used (calculation up to implementation details)
     :return: True if fingerprint is known, False if unknown.
     """
-    conn = sqlite3.connect('pdp_source_1.db')
+    conn = sqlite3.connect('data_sources/pdp_source_1.db')
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE id=? AND fingerprint=?", (id, fingerprint))
     if c.fetchall():

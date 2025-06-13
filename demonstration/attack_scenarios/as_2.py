@@ -6,8 +6,8 @@ subject: dict = {
         "type": "user",
         "id": "user@mail.com",
         "properties": {
-            # author's fingerprint using https://amiunique.org/fingerprint, last access 3 June 2025
-            "fingerprint": "dfd0fd7af55ab8de9aa656c3706dbc1d85713480"
+            # author's fingerprint using https://amiunique.org/fingerprint (sligthly adjusted), last access 3 June 2025
+            "fingerprint": "dfd1fd7cf55ab8de9cc656c3716dbc1d85713480"
         }
 }
 
