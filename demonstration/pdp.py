@@ -61,6 +61,8 @@ def check_required_params():
                 'status': 'Forbidden',
                 'message': 'Mandatory parameter(s) required for \'properties\' missing.'
             }), 403
+        else:
+            pass
     # check for a valid http request format
     if not data or not args_present:
         return jsonify({
