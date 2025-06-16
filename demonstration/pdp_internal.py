@@ -16,28 +16,45 @@ BLOCK_LIST_COUNTIES: set[str] = {
     'China'
 }
 
+ALLOWED_TYPES: set[str] = {
+    'user',
+    'machine'
+}
+
+
+CURR_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(CURR_DIR, 'data_sources', 'pdp_source_1.db')
+
 # Note: In a real implementation, this function would be more sophisticated since it would allow to add an 'id' to the
 # database. The attack scenarios do not contain a scenario where the 'id' needs to be added. Hence, the functionality
 # is not implemented in this non-normative function.
-def _is_id_valid(subject_id: str, subject_type: str, log=False) -> bool:
+def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
     """
     Check whether 'id' is known in database.
-    :param subject_id: 'id' provided by access request
-    :param subject_type: 'type' provided by access request
+    :param sid: 'id' provided by access request
+    :param stype: 'type' provided by access request
     :return: True if 'id' can be found in database, False if not.
     """
-    conn = sqlite3.connect('data_sources/pdp_source_1.db')
+
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE id=? AND type=?", (subject_id, subject_type))
-    res = c.fetchall()
-    print(res)
-    if len(res) > 0:
-        if log:
-            print(f'_is_id_valid: known id {subject_id } found in database\n')
+    c.execute("SELECT * FROM subjects WHERE id=? AND type=?", (sid, stype))
+    if c.fetchone() is not None:
         conn.close()
+        if log:
+            print(f'\t_is_valid_sid: \'{sid}\' is valid? True')
         return True
 
+    conn.close()
+    if log:
+        print(f'\t_is_valid_sid: \'{sid}\' is valid? False')
     return False
+
+def is_valid_stype(stype: str, log=False) -> bool:
+    result: bool = stype in ALLOWED_TYPES
+    if log:
+        print(f'\tis_valid_stype: {stype} is valid? {result}')
+    return result
 
 def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
     """
@@ -62,6 +79,10 @@ def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
         if log:
             print(f'Checking fingerprint: {param_to_check} for user {user_id}')
         return _is_valid_fingerprint(user_id, param_to_check)
+    elif param == 'user_session':
+        if log:
+            print(f'Checking user_session: {param_to_check} for user {user_id}')
+        return _is_valid_session_id(user_id, param_to_check)
 
     return False
 
@@ -137,6 +158,16 @@ def _is_valid_fingerprint(id: str, fingerprint: str) -> bool:
     conn = sqlite3.connect('data_sources/pdp_source_1.db')
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE id=? AND fingerprint=?", (id, fingerprint))
+    if c.fetchall():
+        conn.close()
+        return True
+    return False
+
+def _is_valid_session_id(user_id: str, user_session: str) -> bool:
+    conn = sqlite3.connect('data_sources/pdp_source_1.db')
+    c = conn.cursor()
+    c.execute("SELECT user_sessions FROM users WHERE id=? AND user_session=?", (user_id, user_session))
+    print(c.fetchall())
     if c.fetchall():
         conn.close()
         return True

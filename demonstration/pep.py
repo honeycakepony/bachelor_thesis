@@ -21,6 +21,8 @@ DEFAULT_PARAMS: dict = {
 
             'fingerprint': 'False',
 
+            'user_session': 'hHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f',
+
             "name": "False",
             "os": "False",
             "os_version": "False",

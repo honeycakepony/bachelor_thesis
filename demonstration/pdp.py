@@ -1,6 +1,6 @@
 from flask import Flask, abort, request, jsonify
 from deepdiff import DeepDiff
-from pdp_internal import _is_mandatory_param_valid, _is_id_valid
+from pdp_internal import _is_mandatory_param_valid, _is_valid_sid
 
 from copy import deepcopy
 
@@ -16,10 +16,6 @@ MANDATORY_PARAMS: set[str] = {
     'fingerprint'
 }
 
-ALLOWED_TYPES: set[str] = {
-    'user',
-    'machine'
-}
 
 LOG: bool = True
 THRESHOLD_PARAMS: float = 0.50 # dummy value
@@ -77,7 +73,9 @@ def check_required_params():
     # "id: REQUIRED. A string value containing the unique identifier of the Subject, scoped to the type."
     # Source: OpenID AuthZEN, 2025, section 5.1 -> see Bibliography of thesis
     type_check: bool = data['subject']['type'] in ALLOWED_TYPES
-    id_check: bool = _is_id_valid(data['subject']['id'], data['subject']['type'], LOG)
+    print(f'{type_check=}')
+    id_check: bool = _is_valid_sid(data['subject']['id'], data['subject']['type'], LOG)
+    print(f'{id_check=}')
     if not type_check or not id_check:
         return jsonify({
             'status': 'Forbidden',
@@ -146,13 +144,16 @@ def handle_access_request():
 
 @app.route('/check_update', methods=['GET', 'POST'])
 def check_update():
+    print(f'{copy_request=}')
     new_data = request.get_json()
     diff: dict = DeepDiff(new_data, copy_request)
+    print(f'{diff=}')
     is_valid: bool = True
     for k in diff.affected_paths:
         if not is_valid:
             break
         indices: list[int] = [i for i, c in enumerate(k) if c == "'"]
+        print(f'{indices=}')
         param_to_check: str = k[indices[-2] + 1:indices[-1]]
         if param_to_check in mandatory_params:
             is_valid = _is_mandatory_param_valid(param_to_check, new_data, log=True)
