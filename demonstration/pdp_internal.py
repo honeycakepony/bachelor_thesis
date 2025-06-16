@@ -162,12 +162,15 @@ def _is_valid_fingerprint(id: str, fingerprint: str) -> bool:
         return True
     return False
 
-def _is_valid_session_id(user_id: str, user_session: str) -> bool:
-    conn = sqlite3.connect('data_sources/pdp_source_1.db')
+def _is_valid_session_id(sid: str, user_session: str, log=False) -> bool:
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT user_sessions FROM users WHERE id=? AND user_session=?", (user_id, user_session))
-    print(c.fetchall())
-    if c.fetchall():
+    c.execute("SELECT * FROM subjects WHERE id=? AND user_session=?", (sid, user_session))
+    if c.fetchone() is not None:
         conn.close()
+        if log:
+            print(f'\t_is_valid_session_id: \'{user_session}\' for \'{sid}\' is valid? \'True\'')
         return True
+    if log:
+        print(f'\t_is_valid_session_id: \'{user_session}\' for \'{sid}\' is valid? \'False\'')
     return False

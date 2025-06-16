@@ -5,7 +5,7 @@ from demonstration.classes.context import Context
 from demonstration.classes.resource import Resource
 from demonstration.classes.user import User
 from demonstration.classes.machine import Machine
-from demonstration.pdp_internal import _is_valid_sid, _is_valid_stype
+from demonstration.pdp_internal import _is_valid_sid, _is_valid_stype, _is_valid_session_id
 
 import unittest
 
@@ -101,19 +101,19 @@ class TestPDP(unittest.TestCase):
     def test_sid_invalid_1(self):
         user_invalid = User('gabrielll@mission−thesis.org')
         response: bool = _is_valid_sid(user_invalid.id, user_invalid.type, log=True)
-        self.assertFalse(response)
+        self.assertFalse(response) # 'gabrielll@mission−thesis.org' invalid
 
     def test_sid_invalid_2(self):
         user_invalid = User('gabriel@mission−thesis.org')
         user_invalid.type = 'superuser'
         response: bool = _is_valid_sid(user_invalid.id, user_invalid.type, log=True)
-        self.assertFalse(response)
+        self.assertFalse(response)  # 'user_invalid.type' invalid
 
     def test_sid_invalid_3(self):
         machine_invalid = Machine('gabriel@mission−thesis.org')
         machine_invalid.type = 'auditor'
         response: bool = _is_valid_sid(machine_invalid.id, machine_invalid.type, log=True)
-        self.assertFalse(response)
+        self.assertFalse(response) # 'machine_invalid.type' invalid
 
     # testing subject type (stype)
     def test_stype_valid_1(self):
@@ -130,19 +130,19 @@ class TestPDP(unittest.TestCase):
         machine_invalid = Machine('test@mission−thesis.org')
         machine_invalid.type = 'auditor'
         response: bool = _is_valid_stype(machine_invalid.type, log=True)
-        self.assertFalse(response)
+        self.assertFalse(response)  # 'machine_invalid.type' invalid
 
     def test_stype_invalid_2(self):
         machine_invalid = Machine('test@mission−thesis.org')
         machine_invalid.type = 'supermachine'
         response: bool = _is_valid_stype(machine_invalid.type, log=True)
-        self.assertFalse(response)
+        self.assertFalse(response) # 'machine_invalid.type' invalid
 
     def test_stype_invalid_3(self):
         user_invalid = User('test@mission−thesis.org')
         user_invalid.type = 'superuser'
         response: bool = _is_valid_stype(user_invalid.type, log=True)
-        self.assertFalse(response)
+        self.assertFalse(response) # 'user_invalid.type' invalid
 
     def test_check_required_params_valid_1(self):
         user_valid = User('gabriel@mission−thesis.org')
@@ -160,29 +160,33 @@ class TestPDP(unittest.TestCase):
                                 json=access_request_valid)
         self.assertEqual(response.status_code, 200)
 
-    # def test_missing_mandatory_params(self):
-    #     response = requests.get(URL + 'check_mandatory_params_1', json=payload_valid_user)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(response.json()['message'], 'Mandatory parameter(s) are either not present or invalid.')
-    #
-    # def test_mandatory_params_reduction(self):
-    #     response = requests.get(URL + 'check_mandatory_params_2', json=payload_valid_user)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(response.json()['message'], 'All mandatory parameters are present.')
-    #
-    # # doesn't matter which check_mandatory_params_X is used
-    # def test_invalid_id(self):
-    #     payload_invalid_user['subject']['id'] = 'gabriel@mission−thesis.org'
-    #     response = requests.get(URL + 'check_mandatory_params_1', json=payload_invalid_user)
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(response.json()['status'], 'Forbidden')
-    #
-    # # doesn't matter which check_mandatory_params_X is used
-    # def test_invalid_type(self):
-    #     payload_invalid_user['subject']['type'] = 'superuser'
-    #     response = requests.get(URL + 'check_mandatory_params_2', json=payload_invalid_user)
-    #     self.assertEqual(response.status_code, 403)
-    #     self.assertEqual(response.json()['status'], 'Forbidden')
+    def test_check_required_params_invalid_1(self):
+        user_invalid = User('gabriel@mission_thesis.org')
+        access_request_invalid: dict = create_dummy_access_request_no_context(user_invalid.__make_dict__())
+        response = requests.get(URL + 'check_required_params',
+                                params={'parametrised': False, 'drop_ok': False},
+                                json=access_request_invalid)
+        # 'ethan@mission_thesis.org' invalid
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()['testing'], 'Invalid \'stype\' or \'sid\'')
+
+    def test_session_valid(self):
+        user_valid = User('ethan@mission−thesis.org')
+        user_valid.user_session = 'aHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
+        response: bool = _is_valid_session_id(user_valid.id, user_valid.user_session, log=True)
+        self.assertTrue(response)
+
+    def test_session_invalid_1(self):
+        user_invalid = User('ethan@mission_thesis.org')
+        user_invalid.user_session = 'aHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
+        response: bool = _is_valid_session_id(user_invalid.id, user_invalid.user_session, log=True)
+        self.assertFalse(response) # 'ethan@mission_thesis.org' invalid
+
+    def test_session_invalid_2(self):
+        user_invalid = User('ethan@mission-thesis.org')
+        user_invalid.user_session = 'aHQWx3VGAmhlsATTxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
+        response: bool = _is_valid_session_id(user_invalid.id, user_invalid.user_session, log=True)
+        self.assertFalse(response) # 'user_invalid.user_session' invalid
 
 
 if __name__ == '__main__':

@@ -59,12 +59,18 @@ def check_required_params():
         return jsonify({
             'status': 'Forbidden',
             'message': 'Mandatory parameter(s) required for \'id\' or \'type\' missing.',
+            'testing' : 'KeyError for \'stype\' or \'sid\'',
             'function': 'check_required_params'
         }), 403
 
-    print(f'{not bool(arg_parametrised)=}')
-    print(f'{stype_valid=}')
-    print(f'{sid_valid=}')
+    if not stype_valid or not sid_valid:
+        return jsonify({
+            'status': 'Forbidden',
+            'message': 'Mandatory parameter(s) required for \'id\' or \'type\' missing.',
+            'testing': 'Invalid \'stype\' or \'sid\'',
+            'function': 'check_required_params'
+        }), 403
+
     if arg_parametrised == 'False' and stype_valid and sid_valid:
         return jsonify({
             'status': 'OK',
