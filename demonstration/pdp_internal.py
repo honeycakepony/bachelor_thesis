@@ -49,7 +49,7 @@ def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
         print(f'\t_is_valid_sid: \'{sid}\' is valid? \'False\'')
     return False
 
-def is_valid_stype(stype: str, log=False) -> bool:
+def _is_valid_stype(stype: str, log=False) -> bool:
     result: bool = stype in ALLOWED_TYPES
     if log:
         print(f'\tis_valid_stype: \'{stype}\' is valid? \'{result}\'')

@@ -5,12 +5,21 @@ from demonstration.classes.context import Context
 from demonstration.classes.resource import Resource
 from demonstration.classes.user import User
 from demonstration.classes.machine import Machine
-from demonstration.pdp_internal import _is_valid_sid, is_valid_stype
+from demonstration.pdp_internal import _is_valid_sid, _is_valid_stype
 
 import unittest
 
 # setup
 URL = 'http://127.0.0.1:2110/'
+
+def create_dummy_access_request_no_context(subject_dict: dict) -> dict:
+    target_resource = Resource('pdf_file', '2025')
+    target_action = Action()
+    return {
+        "subject": subject_dict,
+        "resource": target_resource.__make_dict__(),
+        "action": target_action.__make_dict__()
+    }
 
 # subject_valid: dict = {
 #     "type": "user",
@@ -69,9 +78,6 @@ URL = 'http://127.0.0.1:2110/'
 #     "context": context
 # }
 
-target_resource = Resource('pdf_file', '2025')
-target_action = Action()
-
 
 # payload: dict = {"subject": subject, "resource": resource, "action": action, "context": context}
 # access_request: dict = {"subject": user_valid, "resource": target_resource, "action": target_action}
@@ -112,36 +118,35 @@ class TestPDP(unittest.TestCase):
     # testing subject type (stype)
     def test_stype_valid_1(self):
         user_valid = User('type@mission−thesis.org')
-        response: bool = is_valid_stype(user_valid.type, log=True)
+        response: bool = _is_valid_stype(user_valid.type, log=True)
         self.assertTrue(response)
 
     def test_stype_valid_2(self):
         machine_valid = Machine('test@mission−thesis.org')
-        response: bool = is_valid_stype(machine_valid.type, log=True)
+        response: bool = _is_valid_stype(machine_valid.type, log=True)
         self.assertTrue(response)
 
     def test_stype_invalid_1(self):
         machine_invalid = Machine('test@mission−thesis.org')
         machine_invalid.type = 'auditor'
-        response: bool = is_valid_stype(machine_invalid.type, log=True)
+        response: bool = _is_valid_stype(machine_invalid.type, log=True)
         self.assertFalse(response)
 
     def test_stype_invalid_2(self):
         machine_invalid = Machine('test@mission−thesis.org')
         machine_invalid.type = 'supermachine'
-        response: bool = is_valid_stype(machine_invalid.type, log=True)
+        response: bool = _is_valid_stype(machine_invalid.type, log=True)
         self.assertFalse(response)
 
     def test_stype_invalid_3(self):
         user_invalid = User('test@mission−thesis.org')
         user_invalid.type = 'superuser'
-        response: bool = is_valid_stype(user_invalid.type, log=True)
+        response: bool = _is_valid_stype(user_invalid.type, log=True)
         self.assertFalse(response)
 
     def test_check_required_params_valid_1(self):
         user_valid = User('gabriel@mission−thesis.org')
-        access_request_valid = {"subject": user_valid.__make_dict__(), "resource": target_resource, "action": target_action}
-        print(access_request_valid)
+        access_request_valid: dict = create_dummy_access_request_no_context(user_valid.__make_dict__())
         response = requests.get(URL + 'check_required_params',
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request_valid)
@@ -149,8 +154,7 @@ class TestPDP(unittest.TestCase):
 
     def test_check_required_params_valid_2(self):
         machine_valid = Machine('r2-d2@mission−thesis.org')
-        access_request_valid = {"subject": machine_valid.__make_dict__(), "resource": target_resource, "action": target_action}
-        print(access_request_valid)
+        access_request_valid: dict = create_dummy_access_request_no_context(machine_valid.__make_dict__())
         response = requests.get(URL + 'check_required_params',
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request_valid)

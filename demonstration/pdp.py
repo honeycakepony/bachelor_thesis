@@ -1,6 +1,6 @@
 from flask import Flask, abort, request, jsonify
 from deepdiff import DeepDiff
-from pdp_internal import _is_mandatory_param_valid, _is_valid_sid
+from pdp_internal import _is_mandatory_param_valid, _is_valid_sid, _is_valid_stype
 
 from copy import deepcopy
 
@@ -47,13 +47,14 @@ def check_required_params():
     # retrieve data containing parameters and arguments
     data = request.get_json()
     arg_parametrised: str = request.args.get('parametrised', default='False')
+    print(f'{arg_parametrised=}')
     arg_drop_ok: str = request.args.get('drop_ok', default='False')
 
     # check REQUIRED subject type and subject id
     try:
         stype, sid = data['subject']['type'], data['subject']['id']
         stype_valid: bool = _is_valid_stype(stype, LOG)
-        sid_valid: bool = _is_valid_sid(data['subject']['type'], stype_valid, LOG)
+        sid_valid: bool = _is_valid_sid(sid, stype, LOG)
     except KeyError:
         return jsonify({
             'status': 'Forbidden',
@@ -61,7 +62,10 @@ def check_required_params():
             'function': 'check_required_params'
         }), 403
 
-    if not arg_parametrised and stype_valid and sid_valid:
+    print(f'{not bool(arg_parametrised)=}')
+    print(f'{stype_valid=}')
+    print(f'{sid_valid=}')
+    if arg_parametrised == 'False' and stype_valid and sid_valid:
         return jsonify({
             'status': 'OK',
             'message': f'\'{stype}\' and \'{sid}\' are valid? \'True\'',

@@ -1,14 +1,14 @@
 class Subject:
-    fingerprint: str
-    ip_address: str
-    device_id: str
-    user_session: str
+    DEFAULT_PARAM: str = 'False'
+    type: str
+    fingerprint: str = DEFAULT_PARAM
+    ip_address: str = DEFAULT_PARAM
+    device_id: str = DEFAULT_PARAM
+    user_session: str = DEFAULT_PARAM
 
     def __init__(self, sid: str):
-        self.type: str = 'None'
         self.id: str = sid
 
-    # todo: define dummy values
     def __make_dict__(self):
         return {
             'id': self.id,
