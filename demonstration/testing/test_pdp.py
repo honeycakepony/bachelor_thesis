@@ -1,3 +1,5 @@
+import requests
+
 from demonstration.classes.action import Action
 from demonstration.classes.context import Context
 from demonstration.classes.resource import Resource
@@ -80,20 +82,31 @@ class TestPDP(unittest.TestCase):
     #
 
     #   testing subject id (sid)
-    def test_sid_valid(self):
+    def test_sid_valid_1(self):
         user_valid = User('gabriel@mission−thesis.org')
         response: bool = _is_valid_sid(user_valid.id, user_valid.type, log=True)
         self.assertTrue(response)
 
+    def test_sid_valid_2(self):
+        machine_valid = Machine('r2-d2@mission−thesis.org')
+        response: bool = _is_valid_sid(machine_valid.id, machine_valid.type, log=True)
+        self.assertTrue(response)
+
     def test_sid_invalid_1(self):
-        user_valid = User('gabrielll@mission−thesis.org')
-        response: bool = _is_valid_sid(user_valid.id, user_valid.type, log=True)
+        user_invalid = User('gabrielll@mission−thesis.org')
+        response: bool = _is_valid_sid(user_invalid.id, user_invalid.type, log=True)
         self.assertFalse(response)
 
     def test_sid_invalid_2(self):
-        user_valid = User('gabriel@mission−thesis.org')
-        user_valid.type = 'superuser'
-        response: bool = _is_valid_sid(user_valid.id, user_valid.type, log=True)
+        user_invalid = User('gabriel@mission−thesis.org')
+        user_invalid.type = 'superuser'
+        response: bool = _is_valid_sid(user_invalid.id, user_invalid.type, log=True)
+        self.assertFalse(response)
+
+    def test_sid_invalid_3(self):
+        machine_invalid = Machine('gabriel@mission−thesis.org')
+        machine_invalid.type = 'auditor'
+        response: bool = _is_valid_sid(machine_invalid.id, machine_invalid.type, log=True)
         self.assertFalse(response)
 
     # testing subject type (stype)
@@ -108,16 +121,40 @@ class TestPDP(unittest.TestCase):
         self.assertTrue(response)
 
     def test_stype_invalid_1(self):
-        machine_valid = Machine('test@mission−thesis.org')
-        machine_valid.type = 'auditor'
-        response: bool = is_valid_stype(machine_valid.type, log=True)
+        machine_invalid = Machine('test@mission−thesis.org')
+        machine_invalid.type = 'auditor'
+        response: bool = is_valid_stype(machine_invalid.type, log=True)
         self.assertFalse(response)
 
     def test_stype_invalid_2(self):
-        machine_valid = Machine('test@mission−thesis.org')
-        machine_valid.type = 'superuser'
-        response: bool = is_valid_stype(machine_valid.type, log=True)
+        machine_invalid = Machine('test@mission−thesis.org')
+        machine_invalid.type = 'supermachine'
+        response: bool = is_valid_stype(machine_invalid.type, log=True)
         self.assertFalse(response)
+
+    def test_stype_invalid_3(self):
+        user_invalid = User('test@mission−thesis.org')
+        user_invalid.type = 'superuser'
+        response: bool = is_valid_stype(user_invalid.type, log=True)
+        self.assertFalse(response)
+
+    def test_check_required_params_valid_1(self):
+        user_valid = User('gabriel@mission−thesis.org')
+        access_request_valid = {"subject": user_valid.__make_dict__(), "resource": target_resource, "action": target_action}
+        print(access_request_valid)
+        response = requests.get(URL + 'check_required_params',
+                                params={'parametrised': False, 'drop_ok': False},
+                                json=access_request_valid)
+        self.assertEqual(response.status_code, 200)
+
+    def test_check_required_params_valid_2(self):
+        machine_valid = Machine('r2-d2@mission−thesis.org')
+        access_request_valid = {"subject": machine_valid.__make_dict__(), "resource": target_resource, "action": target_action}
+        print(access_request_valid)
+        response = requests.get(URL + 'check_required_params',
+                                params={'parametrised': False, 'drop_ok': False},
+                                json=access_request_valid)
+        self.assertEqual(response.status_code, 200)
 
     # def test_missing_mandatory_params(self):
     #     response = requests.get(URL + 'check_mandatory_params_1', json=payload_valid_user)

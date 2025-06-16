@@ -16,11 +16,11 @@ MANDATORY_PARAMS: set[str] = {
     'fingerprint'
 }
 
-
 LOG: bool = True
-THRESHOLD_PARAMS: float = 0.50 # dummy value
+THRESHOLD_PARAMS: float = 0.50  # dummy value
 mandatory_params: set[str] = set()
 copy_request: dict = dict()  # used to check for changes of security posture
+
 
 # NOTE: The http status code 401 is never used in this implementation since the means of authorisation of the API is
 # assumed and an implementation of such does not alter the findings of the juxtaposition of the parametrised and
@@ -46,9 +46,30 @@ def check_required_params():
     """
     # retrieve data containing parameters and arguments
     data = request.get_json()
-    arg_parametrised: str = request.args.get('parametrised')
-    arg_drop_ok: str = request.args.get('drop_ok')
-    args_present: bool = arg_parametrised in {'True', 'False'} and arg_drop_ok in {'True', 'False'}
+    arg_parametrised: str = request.args.get('parametrised', default='False')
+    arg_drop_ok: str = request.args.get('drop_ok', default='False')
+
+    # check REQUIRED subject type and subject id
+    try:
+        stype, sid = data['subject']['type'], data['subject']['id']
+        stype_valid: bool = _is_valid_stype(stype, LOG)
+        sid_valid: bool = _is_valid_sid(data['subject']['type'], stype_valid, LOG)
+    except KeyError:
+        return jsonify({
+            'status': 'Forbidden',
+            'message': 'Mandatory parameter(s) required for \'id\' or \'type\' missing.',
+            'function': 'check_required_params'
+        }), 403
+
+    if not arg_parametrised and stype_valid and sid_valid:
+        return jsonify({
+            'status': 'OK',
+            'message': f'\'{stype}\' and \'{sid}\' are valid? \'True\'',
+            'function': 'check_required_params'
+        }), 200
+
+    # todo: continue
+
     try:
         candidate_keys = data['subject']['properties'].keys()
     except KeyError:
@@ -66,7 +87,6 @@ def check_required_params():
             'message': 'No data provided to process or invalid arguments.'
         }), 400
 
-
     # guard clause for check of 'id' and 'type'
     # Note:
     # "type: REQUIRED. A string value that specifies the type of the Subject."
@@ -81,7 +101,6 @@ def check_required_params():
             'status': 'Forbidden',
             'message': 'Mandatory parameter(s) for \'id\' or \'type\' invalid.'
         }), 403
-
 
     if arg_parametrised == 'False':
         return jsonify({
@@ -112,6 +131,7 @@ def check_required_params():
         'status': 'Forbidden',
         'message': 'Mandatory parameter(s) for \'properties\' invalid.'
     }), 403
+
 
 @app.route('/handle_access_request', methods=['GET', 'POST'])
 def handle_access_request():

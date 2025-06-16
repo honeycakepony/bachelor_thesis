@@ -35,25 +35,24 @@ def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
     :param stype: 'type' provided by access request
     :return: True if 'id' can be found in database, False if not.
     """
-
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("SELECT * FROM subjects WHERE id=? AND type=?", (sid, stype))
     if c.fetchone() is not None:
         conn.close()
         if log:
-            print(f'\t_is_valid_sid: \'{sid}\' is valid? True')
+            print(f'\t_is_valid_sid: \'{sid}\' is valid? \'True\'')
         return True
 
     conn.close()
     if log:
-        print(f'\t_is_valid_sid: \'{sid}\' is valid? False')
+        print(f'\t_is_valid_sid: \'{sid}\' is valid? \'False\'')
     return False
 
 def is_valid_stype(stype: str, log=False) -> bool:
     result: bool = stype in ALLOWED_TYPES
     if log:
-        print(f'\tis_valid_stype: {stype} is valid? {result}')
+        print(f'\tis_valid_stype: \'{stype}\' is valid? \'{result}\'')
     return result
 
 def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
