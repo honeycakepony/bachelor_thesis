@@ -6,3 +6,5 @@ class Action:
         return {
             'name': self.name
         }
+
+# more complex example in gematik2023feinkonzept, p. 12

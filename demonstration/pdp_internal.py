@@ -125,13 +125,8 @@ def _is_valid_ip(id: str, ip: str, log=False) -> bool:
                 return False
 
     # 2) lookup in database
-    conn = sqlite3.connect('data_sources/pdp_source_1.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-
-    c.execute("SELECT * FROM users")
-    res = c.fetchall()
-    print(res)
-
     c.execute("SELECT ip_v4 FROM users WHERE id=? AND ip_v4=?", (id, ip))
     res = c.fetchall()
 
