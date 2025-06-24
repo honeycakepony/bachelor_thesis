@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dotenv import load_dotenv
 
 import sqlite3
@@ -21,13 +23,49 @@ ALLOWED_TYPES: set[str] = {
     'machine'
 }
 
-
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(CURR_DIR, 'data_sources', 'pdp_source_1.db')
+
+
+def _check_params_subject(data_subject: dict, response_pep: dict, parametrised: bool, drop_ok: bool, log=False) -> tuple[dict, bool, bool]:
+    try:
+        stype, sid = data_subject['type'], data_subject['id']
+        stype_valid: bool = _is_valid_stype(stype, log)
+        sid_valid: bool = _is_valid_sid(sid, stype, log)
+        print(f'{stype_valid=}, {sid_valid=}, {parametrised=}')
+        if not parametrised and stype_valid and sid_valid:
+            response_pep['subject']['type'] = 'valid'
+            response_pep['subject']['id'] = 'valid'
+            return response_pep, False, False
+    except KeyError:
+        response_pep['subject']['error'] = 'KeyError: \'subject\' not found in request.'
+        return response_pep, False, False
+        # todo: check_params_subject
+        #       parametrised == False
+        #       drop_args    == False
+        #       drop_args    == True
+        #       if flag_error_or_invalid:
+        #           return 'Error' or 'Access denied'
+
+    return response_pep, True, True
+
 
 # Note: In a real implementation, this function would be more sophisticated since it would allow to add an 'id' to the
 # database. The attack scenarios do not contain a scenario where the 'id' needs to be added. Hence, the functionality
 # is not implemented in this non-normative function.
+def _retrieve_stype_sid(data: dict, log=False) -> tuple[str, str] | tuple[None, None]:
+    try:
+        stype, sid = data['subject']['type'], data['subject']['id']
+        stype_valid: bool = _is_valid_stype(stype, LOG)
+        sid_valid: bool = _is_valid_sid(sid, stype, LOG)
+        if stype_valid and sid_valid:
+            return stype, sid
+    except KeyError:
+        pass
+
+    return None, None
+
+
 def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
     """
     Check whether 'id' is known in database.
@@ -49,11 +87,13 @@ def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
         print(f'\t_is_valid_sid: \'{sid}\' is valid? \'False\'')
     return False
 
+
 def _is_valid_stype(stype: str, log=False) -> bool:
     result: bool = stype in ALLOWED_TYPES
     if log:
-        print(f'\tis_valid_stype: \'{stype}\' is valid? \'{result}\'')
+        print(f'\t_is_valid_stype: \'{stype}\' is valid? \'{result}\'')
     return result
+
 
 def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
     """
@@ -156,6 +196,7 @@ def _is_valid_fingerprint(id: str, fingerprint: str) -> bool:
         conn.close()
         return True
     return False
+
 
 def _is_valid_session_id(sid: str, user_session: str, log=False) -> bool:
     conn = sqlite3.connect(DB_PATH)

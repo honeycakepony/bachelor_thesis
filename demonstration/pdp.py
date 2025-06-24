@@ -1,6 +1,11 @@
 from flask import Flask, abort, request, jsonify
 from deepdiff import DeepDiff
-from pdp_internal import _is_mandatory_param_valid, _is_valid_sid, _is_valid_stype
+from requests import Response
+
+# https://pypi.org/project/http-status-code-exception/
+from http_status_code_exception.client_error import BadRequest
+
+from pdp_internal import _check_params_subject
 
 from copy import deepcopy
 
@@ -31,12 +36,25 @@ copy_request: dict = dict()  # used to check for changes of security posture
 # Source: OpenID AuthZEN, 2025, section 12.1.11. -> see Bibliography of thesis
 
 
-# todo: refactor fuction check_required_params
+# todo: refactor function check_required_params
+# check_required_params()
+#   subject:
+#       parametrised == False
+#       drop_args    == False
+#       drop_args    == True
+#   action:
+#       pass
+#   resource:
+#       pass
+#   context:
+#       pass
+#   grant or deny access
+#       add to dict: status_subject, status_action, status_resource, status_context ... -> elegant way for this
 
 # page 49-64, HTTP Status Codes https://datatracker.ietf.org/doc/html/rfc7231#section-6.2
 # https://datatracker.ietf.org/doc/html/rfc9110#name-status-codes
-@app.route('/check_required_params', methods=['GET', 'POST'])
-def check_required_params():
+@app.route('/check_params', methods=['GET', 'POST'])
+def check_params():
     """
     Check whether all required params are present. This check is used for the first encounter between PEP and PDP.
     Dependent on the arguments in the request, this function models the different versions of the API.
@@ -44,41 +62,50 @@ def check_required_params():
     Note: It is possible that PEP provides more keys than PDP requires. This is okay.
     :return: JSON response
     """
-    # retrieve data containing parameters and arguments
-    data = request.get_json()
-    arg_parametrised: str = request.args.get('parametrised', default='False')
-    print(f'{arg_parametrised=}')
-    arg_drop_ok: str = request.args.get('drop_ok', default='False')
+    # load all variables with global scope and complete setup for function
+    global copy_request
+    global mandatory_params
+    flag_error: bool = False  # flag for control flow of function
+    flag_invalid: bool = False
+    response_pep: dict = {'subject': dict(), 'action': dict(), 'resource': dict(), 'context': dict()}
+
+    # retrieve data of access request (sent as JSON) and parameters (called 'args')
+    data: dict = request.get_json(silent=True)  # sets 'data = None' if payload cannot be parsed
+    if data is None:
+        pass
+    arg_parametrised: str = True if request.args.get('parametrised') != 'False' else False
+    arg_drop_ok: str = True if request.args.get('drop_ok') != 'False' else False
+
+
+
+    # handle SUBJECT
+    # todo: check_params_subject
+    #       parametrised == False
+    #       drop_args    == False
+    #       drop_args    == True
+
+    response_pep, flag_error, flag_invalid = (
+        _check_params_subject(data['subject'], response_pep, arg_parametrised, arg_drop_ok, LOG))
+    if flag_error:
+        return jsonify({'status': 'Bad Request', 'message': response_pep}), 400
+
+    if flag_invalid:
+        pass
+
+    if True:
+        return jsonify({'status': 'OK', 'message': response_pep}), 200
+
+    # todo: check_params_action
+    # todo: check_params_resource
+    # todo: check_params_context [Optional]
 
     # check REQUIRED subject type and subject id
-    try:
-        stype, sid = data['subject']['type'], data['subject']['id']
-        stype_valid: bool = _is_valid_stype(stype, LOG)
-        sid_valid: bool = _is_valid_sid(sid, stype, LOG)
-    except KeyError:
-        return jsonify({
-            'status': 'Forbidden',
-            'message': 'Mandatory parameter(s) required for \'id\' or \'type\' missing.',
-            'testing' : 'KeyError for \'stype\' or \'sid\'',
-            'function': 'check_required_params'
-        }), 403
-
-    if not stype_valid or not sid_valid:
-        return jsonify({
-            'status': 'Forbidden',
-            'message': 'Mandatory parameter(s) required for \'id\' or \'type\' missing.',
-            'testing': 'Invalid \'stype\' or \'sid\'',
-            'function': 'check_required_params'
-        }), 403
-
-    if arg_parametrised == 'False' and stype_valid and sid_valid:
-        return jsonify({
-            'status': 'OK',
-            'message': f'\'{stype}\' and \'{sid}\' are valid? \'True\'',
-            'function': 'check_required_params'
-        }), 200
-
-    # todo: continue
+    stype, sid = _retrieve_stype_sid(data)
+    if arg_parametrised == 'False':
+        if None in (stype, sid):
+            return jsonify(JSON_INVALID_ID_TYPE), 403
+        if all((stype, sid)):
+            return jsonify(JSON_VALID_ID_TYPE), 200
 
     try:
         candidate_keys = data['subject']['properties'].keys()
@@ -90,12 +117,6 @@ def check_required_params():
             }), 403
         else:
             pass
-    # check for a valid http request format
-    if not data or not args_present:
-        return jsonify({
-            'status': 'Bad Request',
-            'message': 'No data provided to process or invalid arguments.'
-        }), 400
 
     # guard clause for check of 'id' and 'type'
     # Note:
@@ -174,6 +195,11 @@ def handle_access_request():
 
 @app.route('/check_update', methods=['GET', 'POST'])
 def check_update():
+    """
+    Check which parameters have been updated and re-evaluate required parameters which have been altered since
+    the last check.
+    :return: JSON response
+    """
     print(f'{copy_request=}')
     new_data = request.get_json()
     diff: dict = DeepDiff(new_data, copy_request)
