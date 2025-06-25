@@ -10,7 +10,7 @@ from demonstration.pdp_internal import _is_valid_sid, _is_valid_stype, _is_valid
 import unittest
 
 # setup
-URL = 'http://127.0.0.1:2110/'
+URL = 'http://127.0.0.1:2111/'
 
 def create_dummy_access_request_no_context(subject_dict: dict) -> dict:
     target_resource = Resource('pdf_file', '2025')
@@ -24,15 +24,54 @@ def create_dummy_access_request_no_context(subject_dict: dict) -> dict:
 
 class TestPDP(unittest.TestCase):
     # LOGGING
-    def test_logging_True(self):
-        user_valid = User('ethan@mission−thesis.org')
-        access_request_invalid = create_dummy_access_request_no_context(user_valid.__make_dict__())
+    def test_valid_check_stype_sid_1(self):
+        access_request_valid = create_dummy_access_request_no_context(User('ethan@mission−thesis.org').__make_dict__())
         response = requests.get(URL + 'check_params',
-                                params={'parametrised': False, 'drop_ok': False}, json=access_request_invalid)
+                                params={'parametrised': False, 'drop_ok': False},
+                                json=access_request_valid)
+        print(response.json()['demo'])
         self.assertEqual(response.status_code, 200)
-        print(response.json())
-        self.assertEqual(response.json()['message']['subject']['type'], 'valid')
-        self.assertEqual(response.json()['message']['subject']['id'], 'valid')
+        self.assertEqual('valid', response.json()['message']['subject']['type'])
+        self.assertEqual('valid', response.json()['message']['subject']['id'])
+
+    def test_valid_check_stype_sid_2(self):
+        access_request_valid = create_dummy_access_request_no_context(Machine('c-3po@mission−thesis.org').__make_dict__())
+        response = requests.get(URL + 'check_params',
+                                params={'parametrised': False, 'drop_ok': False},
+                                json=access_request_valid)
+        print(response.json()['demo'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual('valid', response.json()['message']['subject']['type'])
+        self.assertEqual('valid', response.json()['message']['subject']['id'])
+
+    def test_invalid_check_stype_sid_1(self):
+        access_request_invalid = create_dummy_access_request_no_context(User('ethanol@mission−thesis.org').__make_dict__())
+        response = requests.get(URL + 'check_params',
+                                params={'parametrised': False, 'drop_ok': False},
+                                json=access_request_invalid)
+        print(response.json()['demo'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual('invalid', response.json()['message']['subject']['type'])
+        self.assertEqual('invalid', response.json()['message']['subject']['id'])
+
+    def test_invalid_check_stype_sid_2(self):
+        response = requests.get(URL + 'check_params',
+                                params={'parametrised': False, 'drop_ok': False},
+                                json={'subject': {'type': 'admin', 'id': ''}})
+        print(response.json()['demo'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual('invalid', response.json()['message']['subject']['type'], )
+        self.assertEqual('invalid', response.json()['message']['subject']['id'])
+
+    def test_invalid_check_stype_sid_3(self):
+        response = requests.get(URL + 'check_params',
+                                params={'parametrised': False, 'drop_ok': False},
+                                json={'subject': {'type': 'admin'}})
+        print(response.json()['demo'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual('error', response.json()['message']['subject']['type'], )
+        self.assertEqual('error', response.json()['message']['subject']['id'])
+
 
     # SUBJECT PROPERTIES
 

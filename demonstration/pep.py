@@ -106,7 +106,8 @@ payload_valid_user: dict = {
     "context": context
 }
 
-
+respone = requests.get(URL + 'say_hello', json=payload_valid_user)
+print(respone.status_code, respone.json())
 
 response = requests.get(
     URL + 'check_required_params', params={'parametrised': True, 'drop_ok': False}, json=payload_valid_user)

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 from dotenv import load_dotenv
 
 import sqlite3
 import os
 import ipinfo
+from wtforms.validators import optional
 
 # Note: The internal functionality of the helper functions is non-normative functionality and a more sophisticated
 #       implementation is to be expected in a real implementation.
@@ -27,19 +30,46 @@ CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(CURR_DIR, 'data_sources', 'pdp_source_1.db')
 
 
-def _check_params_subject(data_subject: dict, response_pep: dict, parametrised: bool, drop_ok: bool, log=False) -> tuple[dict, bool, bool]:
+def _check_params_subject(
+        data_subject: dict, required_params_subject: dict, response_pep: dict, parametrised: bool, drop_ok: bool, log=False) \
+        -> tuple[dict, dict, bool, bool]:
+
+    # SUBJECT properties -> required for function
+    try:
+        candidate_params: dict = data_subject['properties']
+    except KeyError:
+        candidate_params: dict = {}
+
+    # SUBJECT id and type
     try:
         stype, sid = data_subject['type'], data_subject['id']
         stype_valid: bool = _is_valid_stype(stype, log)
         sid_valid: bool = _is_valid_sid(sid, stype, log)
-        print(f'{stype_valid=}, {sid_valid=}, {parametrised=}')
-        if not parametrised and stype_valid and sid_valid:
-            response_pep['subject']['type'] = 'valid'
-            response_pep['subject']['id'] = 'valid'
-            return response_pep, False, False
+        if not parametrised:
+            required_params_subject: dict = {}
+            optional_params_subject: dict = deepcopy(candidate_params)
+            if stype_valid and sid_valid:
+                response_pep['subject']['type'] = 'valid'
+                response_pep['subject']['id'] = 'valid'
+                return response_pep, required_params_subject, optional_params_subject, False, False
+            if not stype_valid or not sid_valid:
+                response_pep['subject']['type'] = 'invalid'
+                response_pep['subject']['id'] = 'invalid'
+            return response_pep, required_params_subject, optional_params_subject, False, True
     except KeyError:
-        response_pep['subject']['error'] = 'KeyError: \'subject\' not found in request.'
-        return response_pep, False, False
+        response_pep['subject']['type'] = 'error'
+        response_pep['subject']['id'] = 'error'
+        return response_pep, dict(), dict(), True, True
+
+
+    if arg_drop_ok == 'False':
+        if required_params_subject.keys().issubset(candidate_params.keys()):
+            # models
+            required_params_subject: dict = deepcopy(required_params_subject)
+            optional_params_subject: dict = {}
+    is_valid: bool = True
+
+    # SUBJECT all other properties
         # todo: check_params_subject
         #       parametrised == False
         #       drop_args    == False
@@ -47,7 +77,7 @@ def _check_params_subject(data_subject: dict, response_pep: dict, parametrised: 
         #       if flag_error_or_invalid:
         #           return 'Error' or 'Access denied'
 
-    return response_pep, True, True
+    return response_pep, required_params_subject, optional_params_subject, True, True
 
 
 # Note: In a real implementation, this function would be more sophisticated since it would allow to add an 'id' to the

@@ -11,15 +11,17 @@ from copy import deepcopy
 
 app = Flask(__name__)
 
-# define mandatory params for all access requests
-MANDATORY_PARAMS: set[str] = {
-    # Attack Scenario: Change of IP Address and Geolocation
-    'ip_address',
-    'geolocation',
+DEFAULT_PARAM: str = 'False'
 
-    # Attack Scenario: Compromised User Credentials
-    'fingerprint'
+REQUIRED_PARAMS_SUBJECT: dict[str, str] = {
+    'fingerprint': DEFAULT_PARAM,
+    'ip_address': DEFAULT_PARAM,
+    'device_id': DEFAULT_PARAM,
+    'user_session': DEFAULT_PARAM
 }
+
+required_params_subject: dict[str, str] = dict()
+optional_params_subject: dict[str, str] = dict()
 
 LOG: bool = True
 THRESHOLD_PARAMS: float = 0.50  # dummy value
@@ -76,24 +78,21 @@ def check_params():
     arg_parametrised: str = True if request.args.get('parametrised') != 'False' else False
     arg_drop_ok: str = True if request.args.get('drop_ok') != 'False' else False
 
-
-
     # handle SUBJECT
     # todo: check_params_subject
     #       parametrised == False
     #       drop_args    == False
     #       drop_args    == True
 
-    response_pep, flag_error, flag_invalid = (
-        _check_params_subject(data['subject'], response_pep, arg_parametrised, arg_drop_ok, LOG))
+    response_pep, required_params_subject, optional_params_subject, flag_error, flag_invalid = (_check_params_subject(data['subject'], REQUIRED_PARAMS_SUBJECT, response_pep, arg_parametrised, arg_drop_ok, LOG))
     if flag_error:
-        return jsonify({'status': 'Bad Request', 'message': response_pep}), 400
+        return jsonify({'status': 'Bad Request', 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 400
 
     if flag_invalid:
-        pass
+        return jsonify({'status': 'OK', 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 200
 
     if True:
-        return jsonify({'status': 'OK', 'message': response_pep}), 200
+        return jsonify({'status': 'OK', 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 200
 
     # todo: check_params_action
     # todo: check_params_resource
@@ -227,4 +226,4 @@ def check_update():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=2110)
+    app.run(debug=True, port=2111)
