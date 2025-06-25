@@ -23,7 +23,7 @@ def create_dummy_access_request_no_context(subject_dict: dict) -> dict:
 
 
 class TestPDP(unittest.TestCase):
-    # LOGGING
+    # SUBJECT id type
     def test_valid_check_stype_sid_1(self):
         access_request_valid = create_dummy_access_request_no_context(User('ethan@mission−thesis.org').__make_dict__())
         response = requests.get(URL + 'check_params',
@@ -51,7 +51,7 @@ class TestPDP(unittest.TestCase):
                                 json=access_request_invalid)
         print(response.json()['demo'])
         self.assertEqual(response.status_code, 200)
-        self.assertEqual('invalid', response.json()['message']['subject']['type'])
+        self.assertEqual('valid', response.json()['message']['subject']['type'])
         self.assertEqual('invalid', response.json()['message']['subject']['id'])
 
     def test_invalid_check_stype_sid_2(self):
@@ -72,8 +72,16 @@ class TestPDP(unittest.TestCase):
         self.assertEqual('error', response.json()['message']['subject']['type'], )
         self.assertEqual('error', response.json()['message']['subject']['id'])
 
-
-    # SUBJECT PROPERTIES
+    # SUBJECT properties
+    def test_valid_properties_missing_1(self):
+        access_request_valid = create_dummy_access_request_no_context(User('ethan@mission−thesis.org').__make_dict__())
+        response = requests.get(URL + 'check_params',
+                                params={'parametrised': True, 'drop_ok': False},
+                                json=access_request_valid)
+        print(response.json()['demo'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual('invalid', response.json()['message']['subject']['type'])
+        self.assertEqual('invalid', response.json()['message']['subject']['id'])
 
 
 

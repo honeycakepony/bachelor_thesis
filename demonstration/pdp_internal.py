@@ -34,7 +34,7 @@ def _check_params_subject(
         data_subject: dict, required_params_subject: dict, response_pep: dict, parametrised: bool, drop_ok: bool, log=False) \
         -> tuple[dict, dict, bool, bool]:
 
-    # SUBJECT properties -> required for function
+    # SUBJECT properties -> needs to be extracted first
     try:
         candidate_params: dict = data_subject['properties']
     except KeyError:
@@ -45,28 +45,27 @@ def _check_params_subject(
         stype, sid = data_subject['type'], data_subject['id']
         stype_valid: bool = _is_valid_stype(stype, log)
         sid_valid: bool = _is_valid_sid(sid, stype, log)
+        response_pep['subject']['type'] = 'valid' if stype_valid else 'invalid'
+        response_pep['subject']['id'] = 'valid' if sid_valid else 'invalid'
         if not parametrised:
             required_params_subject: dict = {}
             optional_params_subject: dict = deepcopy(candidate_params)
             if stype_valid and sid_valid:
-                response_pep['subject']['type'] = 'valid'
-                response_pep['subject']['id'] = 'valid'
                 return response_pep, required_params_subject, optional_params_subject, False, False
             if not stype_valid or not sid_valid:
-                response_pep['subject']['type'] = 'invalid'
-                response_pep['subject']['id'] = 'invalid'
-            return response_pep, required_params_subject, optional_params_subject, False, True
+                return response_pep, required_params_subject, optional_params_subject, False, True
     except KeyError:
         response_pep['subject']['type'] = 'error'
         response_pep['subject']['id'] = 'error'
         return response_pep, dict(), dict(), True, True
 
-
-    if arg_drop_ok == 'False':
+    if not drop_ok:
         if required_params_subject.keys().issubset(candidate_params.keys()):
-            # models
-            required_params_subject: dict = deepcopy(required_params_subject)
+            required_params_subject: dict = deepcopy(candidate_params)
             optional_params_subject: dict = {}
+        else:
+            return response_pep, required_params_subject, dict(), False, True
+
     is_valid: bool = True
 
     # SUBJECT all other properties
