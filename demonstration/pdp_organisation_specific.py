@@ -1,17 +1,8 @@
-from __future__ import annotations
-
-from copy import deepcopy
-
 from dotenv import load_dotenv
 
 import sqlite3
 import os
 import ipinfo
-from wtforms.validators import optional
-
-# Note: The internal functionality of the helper functions is non-normative functionality and a more sophisticated
-#       implementation is to be expected in a real implementation.
-#       Many checks are kept simple for illustrative purposes.
 
 # load API keys as environment variables
 load_dotenv()
@@ -29,64 +20,14 @@ ALLOWED_TYPES: set[str] = {
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(CURR_DIR, 'data_sources', 'pdp_source_1.db')
 
-
-def _check_params_subject(
-        data_subject: dict, required_params_subject: dict, response_pep: dict, parametrised: bool, drop_ok: bool, log=False) \
-        -> tuple[dict, dict, bool, bool]:
-
-    # SUBJECT properties -> needs to be extracted first
-    try:
-        candidate_params: dict = data_subject['properties']
-    except KeyError:
-        candidate_params: dict = {}
-
-    # SUBJECT id and type
-    try:
-        stype, sid = data_subject['type'], data_subject['id']
-        stype_valid: bool = _is_valid_stype(stype, log)
-        sid_valid: bool = _is_valid_sid(sid, stype, log)
-        response_pep['subject']['type'] = 'valid' if stype_valid else 'invalid'
-        response_pep['subject']['id'] = 'valid' if sid_valid else 'invalid'
-        if not parametrised:
-            required_params_subject: dict = {}
-            optional_params_subject: dict = deepcopy(candidate_params)
-            if stype_valid and sid_valid:
-                return response_pep, required_params_subject, optional_params_subject, False, False
-            if not stype_valid or not sid_valid:
-                return response_pep, required_params_subject, optional_params_subject, False, True
-    except KeyError:
-        response_pep['subject']['type'] = 'error'
-        response_pep['subject']['id'] = 'error'
-        return response_pep, dict(), dict(), True, True
-
-    if not drop_ok:
-        if required_params_subject.keys().issubset(candidate_params.keys()):
-            required_params_subject: dict = deepcopy(candidate_params)
-            optional_params_subject: dict = {}
-        else:
-            return response_pep, required_params_subject, dict(), False, True
-
-    is_valid: bool = True
-
-    # SUBJECT all other properties
-        # todo: check_params_subject
-        #       parametrised == False
-        #       drop_args    == False
-        #       drop_args    == True
-        #       if flag_error_or_invalid:
-        #           return 'Error' or 'Access denied'
-
-    return response_pep, required_params_subject, optional_params_subject, True, True
-
-
 # Note: In a real implementation, this function would be more sophisticated since it would allow to add an 'id' to the
 # database. The attack scenarios do not contain a scenario where the 'id' needs to be added. Hence, the functionality
 # is not implemented in this non-normative function.
 def _retrieve_stype_sid(data: dict, log=False) -> tuple[str, str] | tuple[None, None]:
     try:
         stype, sid = data['subject']['type'], data['subject']['id']
-        stype_valid: bool = _is_valid_stype(stype, LOG)
-        sid_valid: bool = _is_valid_sid(sid, stype, LOG)
+        stype_valid: bool = is_valid_stype(stype, LOG)
+        sid_valid: bool = is_valid_sid(sid, stype, LOG)
         if stype_valid and sid_valid:
             return stype, sid
     except KeyError:
@@ -95,7 +36,7 @@ def _retrieve_stype_sid(data: dict, log=False) -> tuple[str, str] | tuple[None, 
     return None, None
 
 
-def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
+def is_valid_sid(sid: str, stype: str, log=False) -> bool:
     """
     Check whether 'id' is known in database.
     :param sid: 'id' provided by access request
@@ -117,40 +58,40 @@ def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
     return False
 
 
-def _is_valid_stype(stype: str, log=False) -> bool:
+def is_valid_stype(stype: str, log=False) -> bool:
     result: bool = stype in ALLOWED_TYPES
     if log:
         print(f'\t_is_valid_stype: \'{stype}\' is valid? \'{result}\'')
     return result
 
 
-def _is_mandatory_param_valid(param: any, data: dict, log=False) -> bool:
+def is_mandatory_param_valid(param: any, param_to_check: str, sid: str, data_subject: dict, log=False) -> bool:
     """
     Check the validity of a single mandatory parameter by referring to the corresponding policy of the organisation.
+    :param sid:
+    :param param_to_check:
     :param param: Parameter to check
-    :param data: Dict of access request
+    :param data_subject: Dict of access request
     :return: Value determined by check of policy of parameter. If check fails, return False by default..
     """
-    user_id = data['subject']['id']
-    param_to_check = data['subject']['properties'][param]
 
     # check parameter validity
     if param == 'ip_address':
         if log:
-            print(f'_is_mandatory_param_valid: {param_to_check} for user {user_id}')
-        return _is_valid_ip(user_id, param_to_check, True)
+            print(f'_is_mandatory_param_valid: {param_to_check} for user {sid}')
+        return _is_valid_ip(sid, param_to_check, True)
     elif param == 'geolocation':
         if log:
             print(f'Checking geolocation: {param_to_check}')
-        return _is_valid_geolocation(param_to_check, data['subject']['properties']['ip_address'])
+        return _is_valid_geolocation(param_to_check, data_subject['properties']['ip_address'])
     elif param == 'fingerprint':
         if log:
-            print(f'Checking fingerprint: {param_to_check} for user {user_id}')
-        return _is_valid_fingerprint(user_id, param_to_check)
+            print(f'Checking fingerprint: {param_to_check} for user {sid}')
+        return _is_valid_fingerprint(sid, param_to_check)
     elif param == 'user_session':
         if log:
-            print(f'Checking user_session: {param_to_check} for user {user_id}')
-        return _is_valid_session_id(user_id, param_to_check)
+            print(f'Checking user_session: {param_to_check} for user {sid}')
+        return _is_valid_session_id(sid, param_to_check)
 
     return False
 
@@ -220,7 +161,7 @@ def _is_valid_fingerprint(id: str, fingerprint: str) -> bool:
     """
     conn = sqlite3.connect('data_sources/pdp_source_1.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE id=? AND fingerprint=?", (id, fingerprint))
+    c.execute("SELECT * FROM subjects WHERE id=? AND fingerprint=?", (id, fingerprint))
     if c.fetchall():
         conn.close()
         return True

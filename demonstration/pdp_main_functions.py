@@ -4,10 +4,10 @@ from requests import Response
 
 # https://pypi.org/project/http-status-code-exception/
 from http_status_code_exception.client_error import BadRequest
+from pdp_wrapper_functions import _check_params_subject
 
-from pdp_internal import _check_params_subject
-
-from copy import deepcopy
+# todo: simply add optional_params_subject and required_params_subject to a list
+#       (allows to compare values against former values), e.g. 10 values
 
 app = Flask(__name__)
 
@@ -17,14 +17,14 @@ REQUIRED_PARAMS_SUBJECT: dict[str, str] = {
     'fingerprint': DEFAULT_PARAM,
     'ip_address': DEFAULT_PARAM,
     'device_id': DEFAULT_PARAM,
-    'user_session': DEFAULT_PARAM
+    'user_session': DEFAULT_PARAM,
+    'special_ports': DEFAULT_PARAM
 }
 
 required_params_subject: dict[str, str] = dict()
 optional_params_subject: dict[str, str] = dict()
 
 LOG: bool = True
-THRESHOLD_PARAMS: float = 0.50  # dummy value
 mandatory_params: set[str] = set()
 copy_request: dict = dict()  # used to check for changes of security posture
 
@@ -86,13 +86,13 @@ def check_params():
 
     response_pep, required_params_subject, optional_params_subject, flag_error, flag_invalid = (_check_params_subject(data['subject'], REQUIRED_PARAMS_SUBJECT, response_pep, arg_parametrised, arg_drop_ok, LOG))
     if flag_error:
-        return jsonify({'status': 'Bad Request', 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 400
+        return jsonify({'status': 'Bad Request', 'decision': False, 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 400
 
     if flag_invalid:
-        return jsonify({'status': 'OK', 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 200
+        return jsonify({'status': 'OK', 'decision': False, 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 200
 
     if True:
-        return jsonify({'status': 'OK', 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 200
+        return jsonify({'status': 'OK', 'decision': True, 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 200
 
     # todo: check_params_action
     # todo: check_params_resource

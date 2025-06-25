@@ -5,7 +5,7 @@ from demonstration.classes.context import Context
 from demonstration.classes.resource import Resource
 from demonstration.classes.user import User
 from demonstration.classes.machine import Machine
-from demonstration.pdp_internal import _is_valid_sid, _is_valid_stype, _is_valid_session_id
+from demonstration.pdp_wrapper_functions import _is_valid_sid, _is_valid_stype, _is_valid_session_id
 
 import unittest
 
@@ -30,7 +30,7 @@ class TestPDP(unittest.TestCase):
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request_valid)
         print(response.json()['demo'])
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         self.assertEqual('valid', response.json()['message']['subject']['type'])
         self.assertEqual('valid', response.json()['message']['subject']['id'])
 
@@ -40,7 +40,7 @@ class TestPDP(unittest.TestCase):
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request_valid)
         print(response.json()['demo'])
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         self.assertEqual('valid', response.json()['message']['subject']['type'])
         self.assertEqual('valid', response.json()['message']['subject']['id'])
 
@@ -50,7 +50,7 @@ class TestPDP(unittest.TestCase):
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request_invalid)
         print(response.json()['demo'])
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         self.assertEqual('valid', response.json()['message']['subject']['type'])
         self.assertEqual('invalid', response.json()['message']['subject']['id'])
 
@@ -59,7 +59,7 @@ class TestPDP(unittest.TestCase):
                                 params={'parametrised': False, 'drop_ok': False},
                                 json={'subject': {'type': 'admin', 'id': ''}})
         print(response.json()['demo'])
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         self.assertEqual('invalid', response.json()['message']['subject']['type'], )
         self.assertEqual('invalid', response.json()['message']['subject']['id'])
 
@@ -68,7 +68,7 @@ class TestPDP(unittest.TestCase):
                                 params={'parametrised': False, 'drop_ok': False},
                                 json={'subject': {'type': 'admin'}})
         print(response.json()['demo'])
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(400, response.status_code)
         self.assertEqual('error', response.json()['message']['subject']['type'], )
         self.assertEqual('error', response.json()['message']['subject']['id'])
 
@@ -79,9 +79,9 @@ class TestPDP(unittest.TestCase):
                                 params={'parametrised': True, 'drop_ok': False},
                                 json=access_request_valid)
         print(response.json()['demo'])
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual('invalid', response.json()['message']['subject']['type'])
-        self.assertEqual('invalid', response.json()['message']['subject']['id'])
+        self.assertEqual(200, response.status_code)
+        self.assertEqual('valid', response.json()['message']['subject']['type'])
+        self.assertEqual('valid', response.json()['message']['subject']['id'])
 
 
 
