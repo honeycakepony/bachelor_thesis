@@ -1,11 +1,12 @@
 import requests
+import demonstration.pdp_organisation_specific as pdp_os
 
 from demonstration.classes.action import Action
 from demonstration.classes.context import Context
 from demonstration.classes.resource import Resource
 from demonstration.classes.user import User
 from demonstration.classes.machine import Machine
-from demonstration.pdp_wrapper_functions import _is_valid_sid, _is_valid_stype, _is_valid_session_id
+# todo: repair this -> I want to use all tests :)
 
 import unittest
 

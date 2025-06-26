@@ -5,6 +5,9 @@ from requests import Response
 # https://pypi.org/project/http-status-code-exception/
 from http_status_code_exception.client_error import BadRequest
 from pdp_wrapper_functions import _check_params_subject
+import pdp_organisation_specific as pdp_os
+
+import re
 
 # todo: simply add optional_params_subject and required_params_subject to a list
 #       (allows to compare values against former values), e.g. 10 values
@@ -18,15 +21,17 @@ REQUIRED_PARAMS_SUBJECT: dict[str, str] = {
     'ip_address': DEFAULT_PARAM,
     'device_id': DEFAULT_PARAM,
     'user_session': DEFAULT_PARAM,
-    'special_ports': DEFAULT_PARAM
+    'requested_ports': DEFAULT_PARAM
 }
 
 required_params_subject: dict[str, str] = dict()
-optional_params_subject: dict[str, str] = dict()
+optional_params_subject: dict[str, str] = list()
+# used to check for changes of security posture
+required_params_subject_log: list[dict[str, str]] = list()
+optional_params_subject_log: list[dict[str, str]] = list()
 
 LOG: bool = True
-mandatory_params: set[str] = set()
-copy_request: dict = dict()  # used to check for changes of security posture
+MAX_LENGTH_LOG_LIST: int = 10
 
 
 # NOTE: The http status code 401 is never used in this implementation since the means of authorisation of the API is
@@ -65,8 +70,8 @@ def check_params():
     :return: JSON response
     """
     # load all variables with global scope and complete setup for function
-    global copy_request
-    global mandatory_params
+    global required_params_subject
+    global optional_params_subject
     flag_error: bool = False  # flag for control flow of function
     flag_invalid: bool = False
     response_pep: dict = {'subject': dict(), 'action': dict(), 'resource': dict(), 'context': dict()}
@@ -74,123 +79,35 @@ def check_params():
     # retrieve data of access request (sent as JSON) and parameters (called 'args')
     data: dict = request.get_json(silent=True)  # sets 'data = None' if payload cannot be parsed
     if data is None:
-        pass
+        return jsonify({'status': 'Bad Request', 'decision': False, 'demo': 'check_params -> request.get_json',
+                        'message': response_pep}), 400
     arg_parametrised: str = True if request.args.get('parametrised') != 'False' else False
     arg_drop_ok: str = True if request.args.get('drop_ok') != 'False' else False
 
     # handle SUBJECT
-    # todo: check_params_subject
-    #       parametrised == False
-    #       drop_args    == False
-    #       drop_args    == True
+    response_pep, required_params_subject, optional_params_subject, flag_error, flag_invalid = _check_params_subject(
+        data['subject'], REQUIRED_PARAMS_SUBJECT, response_pep, arg_parametrised, arg_drop_ok, LOG)
 
-    response_pep, required_params_subject, optional_params_subject, flag_error, flag_invalid = (_check_params_subject(data['subject'], REQUIRED_PARAMS_SUBJECT, response_pep, arg_parametrised, arg_drop_ok, LOG))
     if flag_error:
-        return jsonify({'status': 'Bad Request', 'decision': False, 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 400
+        return jsonify({'status': 'Bad Request', 'decision': False, 'demo': 'check_params -> _check_params_subject',
+                        'message': response_pep}), 400
 
+    print(f'{response_pep=}')
+    print(f'{required_params_subject=}, {optional_params_subject=}')
     if flag_invalid:
-        return jsonify({'status': 'OK', 'decision': False, 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 200
+        return jsonify({'status': 'OK', 'decision': False, 'demo': 'check_params -> _check_params_subject',
+                        'message': response_pep}), 200
 
+    print(f'{required_params_subject=}, {optional_params_subject=}')
+    required_params_subject_log.append(required_params_subject)
+    optional_params_subject_log.append(optional_params_subject)
     if True:
-        return jsonify({'status': 'OK', 'decision': True, 'demo': 'check_params -> _check_params_subject', 'message': response_pep}), 200
+        return jsonify({'status': 'OK', 'decision': True, 'demo': 'check_params -> _check_params_subject',
+                        'message': response_pep}), 200
 
     # todo: check_params_action
     # todo: check_params_resource
     # todo: check_params_context [Optional]
-
-    # check REQUIRED subject type and subject id
-    stype, sid = _retrieve_stype_sid(data)
-    if arg_parametrised == 'False':
-        if None in (stype, sid):
-            return jsonify(JSON_INVALID_ID_TYPE), 403
-        if all((stype, sid)):
-            return jsonify(JSON_VALID_ID_TYPE), 200
-
-    try:
-        candidate_keys = data['subject']['properties'].keys()
-    except KeyError:
-        if arg_parametrised == 'True':
-            return jsonify({
-                'status': 'Forbidden',
-                'message': 'Mandatory parameter(s) required for \'properties\' missing.'
-            }), 403
-        else:
-            pass
-
-    # guard clause for check of 'id' and 'type'
-    # Note:
-    # "type: REQUIRED. A string value that specifies the type of the Subject."
-    # "id: REQUIRED. A string value containing the unique identifier of the Subject, scoped to the type."
-    # Source: OpenID AuthZEN, 2025, section 5.1 -> see Bibliography of thesis
-    type_check: bool = data['subject']['type'] in ALLOWED_TYPES
-    print(f'{type_check=}')
-    id_check: bool = _is_valid_sid(data['subject']['id'], data['subject']['type'], LOG)
-    print(f'{id_check=}')
-    if not type_check or not id_check:
-        return jsonify({
-            'status': 'Forbidden',
-            'message': 'Mandatory parameter(s) for \'id\' or \'type\' invalid.'
-        }), 403
-
-    if arg_parametrised == 'False':
-        return jsonify({
-            'status': 'OK',
-            'message': 'All mandatory parameters are present.'
-        }), 200
-
-    global mandatory_params
-    global copy_request
-    if arg_drop_ok == 'False':
-        if MANDATORY_PARAMS.issubset(candidate_keys):
-            mandatory_params = MANDATORY_PARAMS
-            copy_request = deepcopy(data)
-            return jsonify({
-                'status': 'OK',
-                'message': 'All mandatory parameters are present.'
-            }), 200
-    if arg_drop_ok == 'True':
-        if len(MANDATORY_PARAMS & candidate_keys) >= THRESHOLD_PARAMS * len(MANDATORY_PARAMS):
-            mandatory_params = MANDATORY_PARAMS.intersection(candidate_keys)
-            copy_request = deepcopy(data)
-            return jsonify({
-                'status': 'OK',
-                'message': 'All mandatory parameters are present.'
-            }), 200
-
-    return jsonify({
-        'status': 'Forbidden',
-        'message': 'Mandatory parameter(s) for \'properties\' invalid.'
-    }), 403
-
-
-@app.route('/handle_access_request', methods=['GET', 'POST'])
-def handle_access_request():
-    """
-    Check whether all mandatory params are present and valid. This is a wrapper function that calls all check functions.
-    Note: In a real implementation, the logic for the Trust Algortihm (TA) could be implemented here in a more
-        advanced version. This is just a placeholder.
-    :return: JSON response
-    """
-    data = request.get_json()
-    is_valid = True
-    for k in mandatory_params:
-        if not is_valid:
-            break
-        if LOG:
-            print(f'Handling access request for mandatory parameter: {k} for {data['subject']['id']}')
-        is_valid = _is_mandatory_param_valid(k, data, log=True)
-
-    if is_valid:
-        return jsonify({
-            'status': 'OK',
-            'message': 'All mandatory parameters are present and valid.'
-        }), 200
-
-    return jsonify({
-        'status': 'OK',
-        'message': 'Mandatory parameter(s) are either not present or invalid.'
-    }), 200
-
 
 @app.route('/check_update', methods=['GET', 'POST'])
 def check_update():
@@ -199,30 +116,53 @@ def check_update():
     the last check.
     :return: JSON response
     """
-    print(f'{copy_request=}')
-    new_data = request.get_json()
-    diff: dict = DeepDiff(new_data, copy_request)
-    print(f'{diff=}')
+    print('ARRIVED: check_update - 1')
+    # loading global variables, especially for keeping track of changes
+    global required_params_subject, required_params_subject_log
+    global optional_params_subject, optional_params_subject_log
+    global LOG, MAX_LENGTH_LOG_LIST
+    arg_parametrised: str = True if request.args.get('parametrised') != 'False' else False
+    arg_drop_ok: str = True if request.args.get('drop_ok') != 'False' else False
+
+    # basic setup
+    response_pep: dict = {'subject': dict(), 'action': dict(), 'resource': dict(), 'context': dict()}
+    updated_data: dict = request.get_json(silent=True)  # sets 'data = None' if payload cannot be parsed
+    # todo: does 'response_pep' make sense here?
+    if updated_data is None:
+        return jsonify(
+            {'status': 'Bad Request', 'decision': False, 'demo': 'check_update -> request.get_json',
+             'message': response_pep}), 400
+    if len(required_params_subject) > MAX_LENGTH_LOG_LIST:
+        return jsonify(
+            {'status': 'OK', 'decision': False, 'demo': 'check_update -> log length valid?',
+             'message': response_pep}), 200
+
+    print('ARRIVED: check_update - 2')
+    print(f'{required_params_subject=}\n{required_params_subject_log=}')
     is_valid: bool = True
-    for k in diff.affected_paths:
-        if not is_valid:
-            break
-        indices: list[int] = [i for i, c in enumerate(k) if c == "'"]
-        print(f'{indices=}')
-        param_to_check: str = k[indices[-2] + 1:indices[-1]]
-        if param_to_check in mandatory_params:
-            is_valid = _is_mandatory_param_valid(param_to_check, new_data, log=True)
+    if arg_parametrised: # checking value changes
+        diff: dict = DeepDiff(updated_data['subject']['properties'], required_params_subject_log[-1])
+        print(f'{diff=}')
+        print(f'{diff.affected_paths=}')
+        for path in diff.affected_paths:
+            if not is_valid:
+                break
+            matches: list[str] = re.findall("'([^']+)'", path)
+            print(f'{matches=}')
+            param_to_check: str = matches[-1]
+            if param_to_check in set(required_params_subject.keys()):
+                is_valid = pdp_os.is_required_param_valid(
+                    updated_data['subject']['properties'][param_to_check], param_to_check, updated_data['subject']['id'],
+                    updated_data, log=True)
+                response_pep['subject'][param_to_check] = 'valid' if is_valid else 'invalid'
 
+    print('ARRIVED: check_update - 3')
     if is_valid:
-        return jsonify({
-            'status': 'OK',
-            'message': 'All mandatory parameters are present and valid.'
-        }), 200
+        return jsonify({'status': 'OK', 'decision': True, 'demo': 'check_update',
+                        'message': response_pep}), 200
 
-    return jsonify({
-        'status': 'OK',
-        'message': 'Mandatory parameter(s) are either not present or invalid.'
-    }), 200
+    return jsonify({'status': 'Forbidden', 'decision': False, 'demo': 'check_update',
+                    'message': response_pep}), 403
 
 
 if __name__ == '__main__':

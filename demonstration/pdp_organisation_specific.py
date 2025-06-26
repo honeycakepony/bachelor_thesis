@@ -65,9 +65,10 @@ def is_valid_stype(stype: str, log=False) -> bool:
     return result
 
 
-def is_mandatory_param_valid(param: any, param_to_check: str, sid: str, data_subject: dict, log=False) -> bool:
+def is_required_param_valid(param: any, param_to_check: str, sid: str, data_subject: dict, log=False) -> bool:
     """
     Check the validity of a single mandatory parameter by referring to the corresponding policy of the organisation.
+    :param log:
     :param sid:
     :param param_to_check:
     :param param: Parameter to check
@@ -75,23 +76,52 @@ def is_mandatory_param_valid(param: any, param_to_check: str, sid: str, data_sub
     :return: Value determined by check of policy of parameter. If check fails, return False by default..
     """
 
-    # check parameter validity
     if param == 'ip_address':
         if log:
-            print(f'_is_mandatory_param_valid: {param_to_check} for user {sid}')
-        return _is_valid_ip(sid, param_to_check, True)
+            print(f'\tis_mandatory_param_valid -> _is_valid_ip\n'
+                  f'\t\tChecking ip_address: {param_to_check} for user {sid}')
+        return _is_valid_ip(sid, param_to_check, log)
+    # todo: add 'geolocation' to all relevant places
     elif param == 'geolocation':
         if log:
-            print(f'Checking geolocation: {param_to_check}')
+            print(f'\tis_mandatory_param_valid -> _is_valid_geolocation\n'
+                  f'\t\tChecking geolocation: {param_to_check}')
         return _is_valid_geolocation(param_to_check, data_subject['properties']['ip_address'])
     elif param == 'fingerprint':
         if log:
-            print(f'Checking fingerprint: {param_to_check} for user {sid}')
-        return _is_valid_fingerprint(sid, param_to_check)
+            print(f'\tis_mandatory_param_valid -> _is_valid_fingerprint\n'
+                  f'\t\tChecking fingerprint: {param_to_check} for user {sid}')
+        return _is_valid_fingerprint(sid, param_to_check, log)
     elif param == 'user_session':
         if log:
-            print(f'Checking user_session: {param_to_check} for user {sid}')
-        return _is_valid_session_id(sid, param_to_check)
+            print(f'\tis_mandatory_param_valid -> _is_valid_session_id\n'
+                  f'\t\tChecking user_session: {param_to_check} for user {sid}')
+        return _is_valid_session_id(sid, param_to_check, log)
+    elif param == 'requested_ports':
+        if log:
+            print(f'\tis_mandatory_param_valid -> _is_valid_requested_ports\n'
+                  f'\t\tChecking requested_ports: {param_to_check} for user {sid}')
+        return _is_valid_requested_ports(sid, param_to_check, log)
+    elif param == 'device_id':
+        if log:
+            print(f'\tis_mandatory_param_valid -> _is_valid_device_id\n'
+                  f'\t\tChecking device_id: {param_to_check} for user {sid}')
+        return _is_valid_device_id(sid, param_to_check, log)
+
+    return False
+
+# todo
+def _is_valid_requested_ports(sid: str, param_to_check: str, log=False) -> bool:
+    if param_to_check == '443':
+        return True
+
+    return False
+
+# todo
+def _is_valid_device_id(sid: str, param_to_check: str, log=False) -> bool:
+    print(f'f{param_to_check=}')
+    if param_to_check == '2:42:aa:e8:8d:0c':
+        return True
 
     return False
 
@@ -116,7 +146,7 @@ def _is_valid_geolocation(geolocation: str, ip: str, log=False) -> bool:
     return details.country_name not in BLOCK_LIST_COUNTIES
 
 
-def _is_valid_ip(id: str, ip: str, log=False) -> bool:
+def _is_valid_ip(sid: str, ip: str, log=False) -> bool:
     """
     Checks 1) whether an IP address is contained in blocklist, 2) whether IP address is known for subject.
     :param ip: ID of subject
@@ -137,21 +167,18 @@ def _is_valid_ip(id: str, ip: str, log=False) -> bool:
     # 2) lookup in database
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT ip_v4 FROM users WHERE id=? AND ip_v4=?", (id, ip))
-    res = c.fetchall()
-
-    for r in res:
-        if ip in r:
-            if log:
-                print(f'_is_valid_ip: known IP {ip} found in database\n')
-            conn.close()
-            return True
+    c.execute("SELECT * FROM subjects WHERE id=? AND ip_address=?", (sid, ip))
+    if c.fetchone() is not None:
+        conn.close()
+        if log:
+            print(f'\t_is_valid_ip: \'{ip}\' is valid? \'True\'')
+        return True
 
     # add IP address after validity check according to policy of organisation
     return False
 
 
-def _is_valid_fingerprint(id: str, fingerprint: str) -> bool:
+def _is_valid_fingerprint(sid: str, fingerprint: str, log=False) -> bool:
     """
     Check whether fingerprint of subject (i.e. fingerprint of system beingn used) is known in database. If not,
     additional authentication or enrollment of device are possible options (up to implementation details).
@@ -161,10 +188,15 @@ def _is_valid_fingerprint(id: str, fingerprint: str) -> bool:
     """
     conn = sqlite3.connect('data_sources/pdp_source_1.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM subjects WHERE id=? AND fingerprint=?", (id, fingerprint))
-    if c.fetchall():
+    c.execute("SELECT * FROM subjects WHERE id=? AND fingerprint=?", (sid, fingerprint))
+    if c.fetchone() is not None:
         conn.close()
+        if log:
+            print(f'\t\t\t_is_valid_fingerprint: \'{fingerprint}\' is valid? \'True\'')
         return True
+
+    if log:
+        print(f'\t\t\t_is_valid_fingerprint: \'{fingerprint}\' is valid? \'False\'')
     return False
 
 

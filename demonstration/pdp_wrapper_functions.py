@@ -17,6 +17,10 @@ def _check_params_subject(
         candidate_params: dict = {}
 
     # SUBJECT id and type
+    # Note:
+    # "type: REQUIRED. A string value that specifies the type of the Subject."
+    # "id: REQUIRED. A string value containing the unique identifier of the Subject, scoped to the type."
+    # Source: OpenID AuthZEN, 2025, section 5.1 -> see Bibliography of thesis
     try:
         stype, sid = data_subject['type'], data_subject['id']
         stype_valid: bool = pdp_os.is_valid_stype(stype, log)
@@ -34,6 +38,11 @@ def _check_params_subject(
         response_pep['subject']['type'] = 'error'
         response_pep['subject']['id'] = 'error'
         return response_pep, None, None, True, True
+
+    # todo: check_params_subject
+    #       parametrised == False
+    #       drop_args    == False
+    #       drop_args    == True
 
     set_required_params_subject: set[str] = set(required_params_subject.keys())
     set_candidate_params: set[str] = set(candidate_params.keys())
@@ -63,11 +72,13 @@ def _check_params_subject(
             if log:
                 print(f'\tcheck_params_subject -> pdp_os.is_mandatory_param_valid: {k} for {sid}')
             param_to_check: str = data_subject['properties'][k]
-            is_valid = pdp_os.is_mandatory_param_valid(k, param_to_check, sid, data_subject, log)
+            is_valid = pdp_os.is_required_param_valid(k, param_to_check, sid, data_subject, log)
             response_pep['subject'][k] = 'valid' if is_valid else 'invalid'
         except KeyError:
             response_pep['subject'][k] = 'error'
             return response_pep, None, None, True, True
+    else:
+        return response_pep, required_params_subject, optional_params_subject, False, False
 
     return response_pep, None, None, False, True
 
