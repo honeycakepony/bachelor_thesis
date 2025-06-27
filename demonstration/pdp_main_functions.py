@@ -132,7 +132,7 @@ def check_update():
         return jsonify(
             {'status': 'Bad Request', 'decision': False, 'demo': 'check_update -> request.get_json',
              'message': response_pep}), 400
-    if len(required_params_subject) > MAX_LENGTH_LOG_LIST:
+    if len(required_params_subject_log) > MAX_LENGTH_LOG_LIST:
         return jsonify(
             {'status': 'OK', 'decision': False, 'demo': 'check_update -> log length valid?',
              'message': response_pep}), 200
@@ -155,6 +155,15 @@ def check_update():
                     updated_data['subject']['properties'][param_to_check], param_to_check, updated_data['subject']['id'],
                     updated_data, log=True)
                 response_pep['subject'][param_to_check] = 'valid' if is_valid else 'invalid'
+        required_params_subject_log.append(updated_data['subject']['properties'])
+        optional_params_subject_log.append(dict())
+
+    # note that 'check_update' is not used for the non-parametrised API version
+    # this function invocation is for illustrative purposes only
+    if not arg_parametrised:
+        required_params_subject_log.append(dict())
+        optional_params_subject_log.append(updated_data['subject']['properties'])
+
 
     print('ARRIVED: check_update - 3')
     if is_valid:

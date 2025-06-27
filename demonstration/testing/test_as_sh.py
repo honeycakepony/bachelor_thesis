@@ -10,7 +10,6 @@ subject: dict = {
     'type': 'user',
     'id': 'gabriel@mission−thesis.org',
     'properties': {
-        # fingerprint of attacker
         'fingerprint': 'fef2e6094100944eb27f5aa88f3fe110ce2a7066d0d68256c1ec621776339349',
         'ip_address': '210.30.1.241',
         'device_id': '2:42:aa:e8:8d:0c',
@@ -45,17 +44,15 @@ class TestAttackScenarioSC(unittest.TestCase):
         response = requests.get(URL + 'check_params',
                                 params={'parametrised': True, 'drop_ok': False},
                                 json=access_request)
-        print(1, response.json()['message'])
         self.assertEqual(200, response.status_code)
         self.assertEqual(True, response.json()['decision'])
-        # hijack session
+        # hijack session -> user_session of hijacked session
         access_request_change = deepcopy(access_request)
         access_request_change['subject']['properties']['user_session'] = 'gHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
-        print(f'{access_request_change=}')
         response = requests.get(URL + 'check_update',
                                 params={'parametrised': True, 'drop_ok': False},
                                 json=access_request_change)
-        print(2, response.json()['message'])
+        print(f'The following change was detected: {response.json()['message']['subject']}')
         self.assertEqual(403, response.status_code)
         self.assertEqual(False, response.json()['decision'])
 
@@ -67,7 +64,7 @@ class TestAttackScenarioSC(unittest.TestCase):
                                 json=access_request)
         self.assertEqual(200, response.status_code)
         self.assertEqual(True, response.json()['decision'])
-        # hijack session
+        # hijack session -> user_session of hijacked session
         access_request_change = deepcopy(access_request)
         access_request_change['subject']['properties'][
             'user_session'] = 'gHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
