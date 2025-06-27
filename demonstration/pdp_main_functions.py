@@ -83,6 +83,7 @@ def check_params():
                         'message': response_pep}), 400
     arg_parametrised: str = True if request.args.get('parametrised') != 'False' else False
     arg_drop_ok: str = True if request.args.get('drop_ok') != 'False' else False
+    print('check params', arg_drop_ok)
 
     # handle SUBJECT
     if LOG:

@@ -40,6 +40,7 @@ access_request: dict = {
 class TestAttackScenarioSC(unittest.TestCase):
     # Parametrised
     def test_param_sc_attacker(self):
+        # stolen credentials do not match subject fingerprint or device_id of attacker
         response = requests.get(URL + 'check_params',
                                 params={'parametrised': True, 'drop_ok': False},
                                 json=access_request)
@@ -52,6 +53,7 @@ class TestAttackScenarioSC(unittest.TestCase):
 
     # Non-parametrised
     def test_nonparam_sc_attacker(self):
+        # stolen credentials not detected as suspicious
         response = requests.get(URL + 'check_params',
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request)

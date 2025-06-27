@@ -41,6 +41,7 @@ access_request: dict = {
 class TestAttackScenarioSH(unittest.TestCase):
     # Parametrised
     def test_param_sh_attacker(self):
+        # changed subject user_session mid-session detected -> possibly re-authentication and re-authorisation necessary
         response = requests.get(URL + 'check_params',
                                 params={'parametrised': True, 'drop_ok': False},
                                 json=access_request)
@@ -59,6 +60,9 @@ class TestAttackScenarioSH(unittest.TestCase):
 
     # Non-parametrised
     def test_nonparam_sh_attacker(self):
+        # change of subject user_session is not detected
+        # Note: 'check_update' is not used for the non-parametrised API version this function invocation is for
+        #       illustrative purposes only
         response = requests.get(URL + 'check_params',
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request)
@@ -68,8 +72,7 @@ class TestAttackScenarioSH(unittest.TestCase):
         access_request_change = deepcopy(access_request)
         access_request_change['subject']['properties'][
             'user_session'] = 'gHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
-        # note that 'check_update' is not used for the non-parametrised API version
-        # this function invocation is for illustrative purposes only
+
         response = requests.get(URL + 'check_update',
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request_change)

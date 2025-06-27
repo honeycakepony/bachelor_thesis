@@ -23,8 +23,8 @@ def _check_params_subject(
     # Source: OpenID AuthZEN, 2025, section 5.1 -> see Bibliography of thesis
     try:
         stype, sid = data_subject['type'], data_subject['id']
-        stype_valid: bool = pdp_os.is_valid_stype(stype, log)
-        sid_valid: bool = pdp_os.is_valid_sid(sid, stype, log)
+        stype_valid: bool = pdp_os._is_valid_stype(stype, log)
+        sid_valid: bool = pdp_os._is_valid_sid(sid, stype, log)
         response_pep['subject']['type'] = 'valid' if stype_valid else 'invalid'
         response_pep['subject']['id'] = 'valid' if sid_valid else 'invalid'
         if not parametrised:
@@ -46,7 +46,8 @@ def _check_params_subject(
 
     set_required_params_subject: set[str] = set(required_params_subject.keys())
     set_candidate_params: set[str] = set(candidate_params.keys())
-    if not drop_ok:
+    print('check subject', drop_ok)
+    if drop_ok:
         if log:
             print('\t_check_params_subject -> checking for possible subset match')
         if set_required_params_subject.issubset(set_candidate_params):
@@ -66,6 +67,8 @@ def _check_params_subject(
             return response_pep, None, None, False, True
 
     is_valid: bool = True
+    required_params_subject: dict = deepcopy(candidate_params)
+    optional_params_subject: dict = {}
     for k in required_params_subject.keys():
         if not is_valid:
             break
@@ -90,5 +93,3 @@ def _check_params_subject(
     #       drop_args    == True
     #       if flag_error_or_invalid:
     #           return 'Error' or 'Access denied'
-
-    return response_pep, required_params_subject, optional_params_subject, True, True

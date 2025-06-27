@@ -25,51 +25,6 @@ ALLOW_LIST_STYPES: set[str] = {
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(CURR_DIR, 'data_sources', 'pdp_source_1.db')
 
-# Note: In a real implementation, this function would be more sophisticated since it would allow to add an 'id' to the
-# database. The attack scenarios do not contain a scenario where the 'id' needs to be added. Hence, the functionality
-# is not implemented in this non-normative function.
-def _retrieve_stype_sid(data: dict, log=False) -> tuple[str, str] | tuple[None, None]:
-    try:
-        stype, sid = data['subject']['type'], data['subject']['id']
-        stype_valid: bool = is_valid_stype(stype, LOG)
-        sid_valid: bool = is_valid_sid(sid, stype, LOG)
-        if stype_valid and sid_valid:
-            return stype, sid
-    except KeyError:
-        pass
-
-    return None, None
-
-
-def is_valid_sid(sid: str, stype: str, log=False) -> bool:
-    """
-    Check whether 'id' is known in database.
-    :param sid: 'id' provided by access request
-    :param stype: 'type' provided by access request
-    :return: True if 'id' can be found in database, False if not.
-    """
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM subjects WHERE id=? AND type=?", (sid, stype))
-    if c.fetchone() is not None:
-        conn.close()
-        if log:
-            print(f'\t_is_valid_sid: \'{sid}\' is valid? \'True\'')
-        return True
-
-    conn.close()
-    if log:
-        print(f'\t_is_valid_sid: \'{sid}\' is valid? \'False\'')
-    return False
-
-
-def is_valid_stype(stype: str, log=False) -> bool:
-    result: bool = stype in ALLOW_LIST_STYPES
-    if log:
-        print(f'\t_is_valid_stype: \'{stype}\' is valid? \'{result}\'')
-    return result
-
-
 def is_required_param_valid(param: any, param_to_check: str, sid: str, data_subject: dict, log=False) -> bool:
     """
     Check the validity of a single mandatory parameter by referring to the corresponding policy of the organisation.
@@ -115,6 +70,34 @@ def is_required_param_valid(param: any, param_to_check: str, sid: str, data_subj
         return _is_valid_device_id(sid, param_to_check, log)
 
     return False
+
+def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
+    """
+    Check whether 'id' is known in database.
+    :param sid: 'id' provided by access request
+    :param stype: 'type' provided by access request
+    :return: True if 'id' can be found in database, False if not.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM subjects WHERE id=? AND type=?", (sid, stype))
+    if c.fetchone() is not None:
+        conn.close()
+        if log:
+            print(f'\t_is_valid_sid: \'{sid}\' is valid? \'True\'')
+        return True
+
+    conn.close()
+    if log:
+        print(f'\t_is_valid_sid: \'{sid}\' is valid? \'False\'')
+    return False
+
+
+def _is_valid_stype(stype: str, log=False) -> bool:
+    result: bool = stype in ALLOW_LIST_STYPES
+    if log:
+        print(f'\t_is_valid_stype: \'{stype}\' is valid? \'{result}\'')
+    return result
 
 def _is_valid_requested_ports(param_to_check: str, log=False) -> bool:
     if param_to_check in ALLOW_LIST_PORTS:
@@ -218,6 +201,13 @@ def _is_valid_fingerprint(sid: str, fingerprint: str, log=False) -> bool:
 
 
 def _is_valid_session_id(sid: str, user_session: str, log=False) -> bool:
+    """
+    Check whether session_id of subject is the same as for the start -> stored in database.
+    If change mid-session to unknow session_id is detected, require re-authentication and re-authorisation.
+    :param sid: ID of subject
+    :param user_session: Session ID of current session (in cookie)
+    :return: True if fingerprint is known, False if unknown.
+    """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("SELECT * FROM subjects WHERE id=? AND user_session=?", (sid, user_session))
