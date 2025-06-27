@@ -47,7 +47,8 @@ def _check_params_subject(
     set_required_params_subject: set[str] = set(required_params_subject.keys())
     set_candidate_params: set[str] = set(candidate_params.keys())
     if not drop_ok:
-        print(f'{set_required_params_subject.issubset(set_candidate_params)=}')
+        if log:
+            print('\t_check_params_subject -> checking for possible subset match')
         if set_required_params_subject.issubset(set_candidate_params):
             required_params_subject: dict = deepcopy(candidate_params)
             optional_params_subject: dict = {}
@@ -70,7 +71,7 @@ def _check_params_subject(
             break
         try:
             if log:
-                print(f'\tcheck_params_subject -> pdp_os.is_mandatory_param_valid: {k} for {sid}')
+                print(f'\tcheck_params_subject -> pdp_os.is_required_param_valid: {k} for {sid}')
             param_to_check: str = data_subject['properties'][k]
             is_valid = pdp_os.is_required_param_valid(k, param_to_check, sid, data_subject, log)
             response_pep['subject'][k] = 'valid' if is_valid else 'invalid'

@@ -12,7 +12,12 @@ BLOCK_LIST_COUNTIES: set[str] = {
     'China'
 }
 
-ALLOWED_TYPES: set[str] = {
+ALLOW_LIST_PORTS: set[int] = {
+    443, # HTTPS
+    3389, # RDP
+}
+
+ALLOW_LIST_STYPES: set[str] = {
     'user',
     'machine'
 }
@@ -59,7 +64,7 @@ def is_valid_sid(sid: str, stype: str, log=False) -> bool:
 
 
 def is_valid_stype(stype: str, log=False) -> bool:
-    result: bool = stype in ALLOWED_TYPES
+    result: bool = stype in ALLOW_LIST_STYPES
     if log:
         print(f'\t_is_valid_stype: \'{stype}\' is valid? \'{result}\'')
     return result
@@ -75,54 +80,64 @@ def is_required_param_valid(param: any, param_to_check: str, sid: str, data_subj
     :param data_subject: Dict of access request
     :return: Value determined by check of policy of parameter. If check fails, return False by default..
     """
+    print('adsfkjdlfsajfkdsak', param_to_check)
 
     if param == 'ip_address':
         if log:
-            print(f'\tis_mandatory_param_valid -> _is_valid_ip\n'
-                  f'\t\tChecking ip_address: {param_to_check} for user {sid}')
+            print(f'\t\tis_mandatory_param_valid -> _is_valid_ip\n'
+                  f'\t\t\tChecking ip_address: {param_to_check} for user {sid}')
         return _is_valid_ip(sid, param_to_check, log)
     # todo: add 'geolocation' to all relevant places
     elif param == 'geolocation':
         if log:
-            print(f'\tis_mandatory_param_valid -> _is_valid_geolocation\n'
-                  f'\t\tChecking geolocation: {param_to_check}')
+            print(f'\t\tis_mandatory_param_valid -> _is_valid_geolocation\n'
+                  f'\t\t\tChecking geolocation: {param_to_check}')
         return _is_valid_geolocation(param_to_check, data_subject['properties']['ip_address'])
     elif param == 'fingerprint':
         if log:
-            print(f'\tis_mandatory_param_valid -> _is_valid_fingerprint\n'
-                  f'\t\tChecking fingerprint: {param_to_check} for user {sid}')
+            print(f'\t\tis_mandatory_param_valid -> _is_valid_fingerprint\n'
+                  f'\t\t\tChecking fingerprint: {param_to_check} for user {sid}')
         return _is_valid_fingerprint(sid, param_to_check, log)
     elif param == 'user_session':
         if log:
-            print(f'\tis_mandatory_param_valid -> _is_valid_session_id\n'
-                  f'\t\tChecking user_session: {param_to_check} for user {sid}')
+            print(f'\t\tis_mandatory_param_valid -> _is_valid_session_id\n'
+                  f'\t\t\tChecking user_session: {param_to_check} for user {sid}')
         return _is_valid_session_id(sid, param_to_check, log)
     elif param == 'requested_ports':
         if log:
-            print(f'\tis_mandatory_param_valid -> _is_valid_requested_ports\n'
-                  f'\t\tChecking requested_ports: {param_to_check} for user {sid}')
-        return _is_valid_requested_ports(sid, param_to_check, log)
+            print(f'\t\tis_mandatory_param_valid -> _is_valid_requested_ports\n'
+                  f'\t\t\tChecking requested_ports: {param_to_check} for user {sid}')
+        return _is_valid_requested_ports(param_to_check, log)
     elif param == 'device_id':
         if log:
-            print(f'\tis_mandatory_param_valid -> _is_valid_device_id\n'
-                  f'\t\tChecking device_id: {param_to_check} for user {sid}')
+            print(f'\t\tis_mandatory_param_valid -> _is_valid_device_id\n'
+                  f'\t\t\tChecking device_id: {param_to_check} for user {sid}')
         return _is_valid_device_id(sid, param_to_check, log)
 
     return False
 
-# todo
-def _is_valid_requested_ports(sid: str, param_to_check: str, log=False) -> bool:
-    if param_to_check == '443':
+def _is_valid_requested_ports(param_to_check: str, log=False) -> bool:
+    if param_to_check in ALLOW_LIST_PORTS:
+        if log:
+            print(f'\t\t\t\t_is_valid_requested_ports: \'{param_to_check}\' is valid? \'True\'')
         return True
 
+    if log:
+        print(f'\t\t\t\t_is_valid_requested_ports: \'{param_to_check}\' is valid? \'False\'')
     return False
 
-# todo
-def _is_valid_device_id(sid: str, param_to_check: str, log=False) -> bool:
-    print(f'f{param_to_check=}')
-    if param_to_check == '2:42:aa:e8:8d:0c':
+def _is_valid_device_id(sid: str, device_id: str, log=False) -> bool:
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM subjects WHERE id=? AND device_id=?", (sid, device_id))
+    if c.fetchone() is not None:
+        conn.close()
+        if log:
+            print(f'\t\t\t\t_is_valid_device_id: \'{device_id}\' is valid? \'True\'')
         return True
 
+    if log:
+        print(f'\t\t\t\t_is_valid_device_id: \'{device_id}\' is valid? \'False\'')
     return False
 
 
@@ -138,11 +153,11 @@ def _is_valid_geolocation(geolocation: str, ip: str, log=False) -> bool:
     if geolocation:
         if geolocation != details.country_name:
             if log:
-                print(f'_is_valid_geolocation: {geolocation} != {details.country_name}')
+                print(f'\t\t\t\t_is_valid_geolocation: {geolocation} != {details.country_name}')
             return False
 
     if log:
-        print(f'_is_valid_geolocation: country found in blocklist? {details.country_name not in BLOCK_LIST_COUNTIES}')
+        print(f'\t\t\t\t_is_valid_geolocation: country found in blocklist? {details.country_name not in BLOCK_LIST_COUNTIES}')
     return details.country_name not in BLOCK_LIST_COUNTIES
 
 
@@ -171,10 +186,12 @@ def _is_valid_ip(sid: str, ip: str, log=False) -> bool:
     if c.fetchone() is not None:
         conn.close()
         if log:
-            print(f'\t_is_valid_ip: \'{ip}\' is valid? \'True\'')
+            print(f'\t\t\t\t_is_valid_ip: \'{ip}\' is valid? \'True\'')
         return True
 
     # add IP address after validity check according to policy of organisation
+    if log:
+        print(f'\t\t\t\t_is_valid_ip: \'{ip}\' is valid? \'False\'')
     return False
 
 
@@ -192,11 +209,11 @@ def _is_valid_fingerprint(sid: str, fingerprint: str, log=False) -> bool:
     if c.fetchone() is not None:
         conn.close()
         if log:
-            print(f'\t\t\t_is_valid_fingerprint: \'{fingerprint}\' is valid? \'True\'')
+            print(f'\t\t\t\t_is_valid_fingerprint: \'{fingerprint}\' is valid? \'True\'')
         return True
 
     if log:
-        print(f'\t\t\t_is_valid_fingerprint: \'{fingerprint}\' is valid? \'False\'')
+        print(f'\t\t\t\t_is_valid_fingerprint: \'{fingerprint}\' is valid? \'False\'')
     return False
 
 
@@ -207,8 +224,8 @@ def _is_valid_session_id(sid: str, user_session: str, log=False) -> bool:
     if c.fetchone() is not None:
         conn.close()
         if log:
-            print(f'\t_is_valid_session_id: \'{user_session}\' for \'{sid}\' is valid? \'True\'')
+            print(f'\t\t\t\t_is_valid_session_id: \'{user_session}\' for \'{sid}\' is valid? \'True\'')
         return True
     if log:
-        print(f'\t_is_valid_session_id: \'{user_session}\' for \'{sid}\' is valid? \'False\'')
+        print(f'\t\t\t\t_is_valid_session_id: \'{user_session}\' for \'{sid}\' is valid? \'False\'')
     return False

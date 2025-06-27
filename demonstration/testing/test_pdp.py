@@ -75,14 +75,17 @@ class TestPDP(unittest.TestCase):
 
     # SUBJECT properties
     def test_valid_properties_missing_1(self):
+        # not all properties are present for parametrised API -> deny access
         access_request_valid = create_dummy_access_request_no_context(User('ethan@mission−thesis.org').__make_dict__())
+        print(access_request_valid)
         response = requests.get(URL + 'check_params',
                                 params={'parametrised': True, 'drop_ok': False},
                                 json=access_request_valid)
         print(response.json()['demo'])
-        self.assertEqual(200, response.status_code)
         self.assertEqual('valid', response.json()['message']['subject']['type'])
         self.assertEqual('valid', response.json()['message']['subject']['id'])
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(False, response.json()['decision'])
 
 
 

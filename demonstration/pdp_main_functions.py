@@ -85,6 +85,8 @@ def check_params():
     arg_drop_ok: str = True if request.args.get('drop_ok') != 'False' else False
 
     # handle SUBJECT
+    if LOG:
+        print('check_params -> _check_params_subject: ', arg_parametrised)
     response_pep, required_params_subject, optional_params_subject, flag_error, flag_invalid = _check_params_subject(
         data['subject'], REQUIRED_PARAMS_SUBJECT, response_pep, arg_parametrised, arg_drop_ok, LOG)
 
@@ -92,8 +94,6 @@ def check_params():
         return jsonify({'status': 'Bad Request', 'decision': False, 'demo': 'check_params -> _check_params_subject',
                         'message': response_pep}), 400
 
-    print(f'{response_pep=}')
-    print(f'{required_params_subject=}, {optional_params_subject=}')
     if flag_invalid:
         return jsonify({'status': 'OK', 'decision': False, 'demo': 'check_params -> _check_params_subject',
                         'message': response_pep}), 200
@@ -116,7 +116,6 @@ def check_update():
     the last check.
     :return: JSON response
     """
-    print('ARRIVED: check_update - 1')
     # loading global variables, especially for keeping track of changes
     global required_params_subject, required_params_subject_log
     global optional_params_subject, optional_params_subject_log
@@ -137,18 +136,13 @@ def check_update():
             {'status': 'OK', 'decision': False, 'demo': 'check_update -> log length valid?',
              'message': response_pep}), 200
 
-    print('ARRIVED: check_update - 2')
-    print(f'{required_params_subject=}\n{required_params_subject_log=}')
     is_valid: bool = True
     if arg_parametrised: # checking value changes
         diff: dict = DeepDiff(updated_data['subject']['properties'], required_params_subject_log[-1])
-        print(f'{diff=}')
-        print(f'{diff.affected_paths=}')
         for path in diff.affected_paths:
             if not is_valid:
                 break
             matches: list[str] = re.findall("'([^']+)'", path)
-            print(f'{matches=}')
             param_to_check: str = matches[-1]
             if param_to_check in set(required_params_subject.keys()):
                 is_valid = pdp_os.is_required_param_valid(

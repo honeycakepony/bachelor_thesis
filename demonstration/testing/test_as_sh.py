@@ -38,7 +38,7 @@ access_request: dict = {
     'context': context
 }
 
-class TestAttackScenarioSC(unittest.TestCase):
+class TestAttackScenarioSH(unittest.TestCase):
     # Parametrised
     def test_param_sh_attacker(self):
         response = requests.get(URL + 'check_params',
@@ -75,10 +75,6 @@ class TestAttackScenarioSC(unittest.TestCase):
                                 json=access_request_change)
         self.assertEqual(200, response.status_code)
         self.assertEqual(True, response.json()['decision'])
-
-
-        # todo: build dummy function which just asserts that access is still granted
-
 
 if __name__ == '__main__':
     unittest.main()
