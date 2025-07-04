@@ -9,7 +9,7 @@ from copy import deepcopy
 def _check_params_subject(
         data_subject: dict, required_params_subject: dict, response_pep: dict, parametrised: bool, drop_ok: bool,
         log=False) \
-        -> tuple[dict, dict, bool, bool]:
+        -> tuple[dict, dict, dict, bool, bool]:
     # SUBJECT properties -> needs to be extracted first
     try:
         candidate_params: dict = data_subject['properties']

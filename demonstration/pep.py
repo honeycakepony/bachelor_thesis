@@ -6,11 +6,6 @@ import pep_internal as pepi
 URL = 'http://127.0.0.1:2110/'
 path = 'handle_request'
 
-# todo: check out requests library about JSON
-#       difference to Flask?
-
-# todo: default False param or so ...
-
 DEFAULT_PARAMS: dict = {
     'subject': {
         'type': 'False',

@@ -70,9 +70,7 @@ class TestAttackScenarioSH(unittest.TestCase):
         self.assertEqual(True, response.json()['decision'])
         # hijack session -> user_session of hijacked session
         access_request_change = deepcopy(access_request)
-        access_request_change['subject']['properties'][
-            'user_session'] = 'gHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
-
+        access_request_change['subject']['properties']['user_session'] = 'gHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
         response = requests.get(URL + 'check_update',
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request_change)

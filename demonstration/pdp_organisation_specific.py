@@ -33,16 +33,13 @@ def is_required_param_valid(param: any, param_to_check: str, sid: str, data_subj
     :param param_to_check:
     :param param: Parameter to check
     :param data_subject: Dict of access request
-    :return: Value determined by check of policy of parameter. If check fails, return False by default..
+    :return: Value determined by check of policy of parameter. If check fails, return False by default.
     """
-    print('adsfkjdlfsajfkdsak', param_to_check)
-
     if param == 'ip_address':
         if log:
             print(f'\t\tis_mandatory_param_valid -> _is_valid_ip\n'
                   f'\t\t\tChecking ip_address: {param_to_check} for user {sid}')
         return _is_valid_ip(sid, param_to_check, log)
-    # todo: add 'geolocation' to all relevant places
     elif param == 'geolocation':
         if log:
             print(f'\t\tis_mandatory_param_valid -> _is_valid_geolocation\n'
@@ -180,7 +177,7 @@ def _is_valid_ip(sid: str, ip: str, log=False) -> bool:
 
 def _is_valid_fingerprint(sid: str, fingerprint: str, log=False) -> bool:
     """
-    Check whether fingerprint of subject (i.e. fingerprint of system beingn used) is known in database. If not,
+    Check whether fingerprint of subject (i.e. fingerprint of system benign used) is known in database. If not,
     additional authentication or enrollment of device are possible options (up to implementation details).
     :param id: ID of subject
     :param fingerprint: Fingerprint (SHA256) of system being used (calculation up to implementation details)
