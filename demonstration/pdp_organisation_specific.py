@@ -68,11 +68,12 @@ def is_required_param_valid(param: any, param_to_check: str, sid: str, data_subj
 
     return False
 
-def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
+def is_valid_sid(sid: str, stype: str, log=False) -> bool:
     """
     Check whether 'id' is known in database.
     :param sid: 'id' provided by access request
     :param stype: 'type' provided by access request
+    :param log: Enable logging functionality
     :return: True if 'id' can be found in database, False if not.
     """
     conn = sqlite3.connect(DB_PATH)
@@ -90,7 +91,7 @@ def _is_valid_sid(sid: str, stype: str, log=False) -> bool:
     return False
 
 
-def _is_valid_stype(stype: str, log=False) -> bool:
+def is_valid_stype(stype: str, log=False) -> bool:
     result: bool = stype in ALLOW_LIST_STYPES
     if log:
         print(f'\t_is_valid_stype: \'{stype}\' is valid? \'{result}\'')

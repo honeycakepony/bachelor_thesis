@@ -23,8 +23,8 @@ def _check_params_subject(
     # Source: OpenID AuthZEN, 2025, section 5.1 -> see Bibliography of thesis
     try:
         stype, sid = data_subject['type'], data_subject['id']
-        stype_valid: bool = pdp_os._is_valid_stype(stype, log)
-        sid_valid: bool = pdp_os._is_valid_sid(sid, stype, log)
+        stype_valid: bool = pdp_os.is_valid_stype(stype, log)
+        sid_valid: bool = pdp_os.is_valid_sid(sid, stype, log)
         response_pep['subject']['type'] = 'valid' if stype_valid else 'invalid'
         response_pep['subject']['id'] = 'valid' if sid_valid else 'invalid'
         if not parametrised:
@@ -43,28 +43,6 @@ def _check_params_subject(
     #       parametrised == False
     #       drop_args    == False
     #       drop_args    == True
-
-    set_required_params_subject: set[str] = set(required_params_subject.keys())
-    set_candidate_params: set[str] = set(candidate_params.keys())
-    print('check subject', drop_ok)
-    if drop_ok:
-        if log:
-            print('\t_check_params_subject -> checking for possible subset match')
-        if set_required_params_subject.issubset(set_candidate_params):
-            required_params_subject: dict = deepcopy(candidate_params)
-            optional_params_subject: dict = {}
-        else:
-            return response_pep, None, None, False, True
-
-    if drop_ok:
-        threshold_params_subject: float = 0.50  # dummy value # todo: add to pdp_os
-        if (len(set_required_params_subject & set_candidate_params)
-                > threshold_params_subject * len(set_required_params_subject)):
-            # todo: add function which determines required_params_subject and optional_params_subject
-            required_params_subject: dict = deepcopy(candidate_params)
-            optional_params_subject: dict = {}
-        else:
-            return response_pep, None, None, False, True
 
     is_valid: bool = True
     required_params_subject: dict = deepcopy(candidate_params)

@@ -6,46 +6,6 @@ import pep_internal as pepi
 URL = 'http://127.0.0.1:2110/'
 path = 'handle_request'
 
-DEFAULT_PARAMS: dict = {
-    'subject': {
-        'type': 'False',
-        'id': 'False',
-        'properties': {
-            'ip_address': 'False',
-            'geolocation': 'False',
-
-            'fingerprint': 'False',
-
-            'user_session': 'hHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f',
-
-            "name": "False",
-            "os": "False",
-            "os_version": "False",
-            "integrity_check": "False",
-            "device_check": "False",
-            "time_system": "False",
-            "authentication": "False",
-            "privileges": "False"
-        }
-    },
-
-    "resource": {
-        "type": "False",
-        "id": "False"
-    },
-
-    "action": {
-        "name": "False",
-        "properties": {
-            "method": "False"
-         }
-    },
-
-    "context": {
-        "time": f"{datetime.now(timezone.utc).isoformat()}"
-    }
-}
-
 subject_valid: dict = {
         "type": "user",
         "id": "ethan@mission−thesis.org",
@@ -91,7 +51,7 @@ action: dict = {
     }
 
 context: dict = {
-        "time": "Sun May 18 12:02:55 CEST 2025"
+        "time": f"{datetime.now(timezone.utc).isoformat()}"
 }
 
 payload_valid_user: dict = {
@@ -101,17 +61,9 @@ payload_valid_user: dict = {
     "context": context
 }
 
-respone = requests.get(URL + 'say_hello', json=payload_valid_user)
-print(respone.status_code, respone.json())
+response = requests.get(URL + 'say_hello', json=payload_valid_user)
+print(response.status_code, respone.json())
 
 response = requests.get(
     URL + 'check_required_params', params={'parametrised': True, 'drop_ok': False}, json=payload_valid_user)
 print(response.status_code, response.json())
-
-
-### handle basic request
-# response = requests.post(URL + path, json=payload)
-# if response.status_code != 200:
-#     print(f'Server Error: {response.status_code}')
-# else:
-#     print(f'Server: {response.json()}')
