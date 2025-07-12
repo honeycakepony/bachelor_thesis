@@ -1,12 +1,12 @@
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 import sqlite3
 import os
-import ipinfo
+# import ipinfo
 
 # load API keys as environment variables
-load_dotenv()
-IPINFO_KEY = os.getenv('IPINFO_API')
+# load_dotenv()
+# IPINFO_KEY = os.getenv('IPINFO_API')
 
 BLOCK_LIST_COUNTIES: set[str] = {
     'China'

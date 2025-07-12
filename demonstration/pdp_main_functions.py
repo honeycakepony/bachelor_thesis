@@ -1,7 +1,6 @@
 from flask import Flask, abort, request, jsonify
 from deepdiff import DeepDiff
 from requests import Response
-from http_status_code_exception.client_error import BadRequest
 from pdp_wrapper_functions import _check_params_subject
 
 import pdp_organisation_specific as pdp_os
