@@ -1,0 +1,15 @@
+Note:
+
+.
+├── attack_scenarios/
+│   ├── as_1.py
+│   └── as_2.py
+└── placeholder_blocklist.txt
+
+# folder structure created using https://tree.nathanfriend.com/, last access 6 June 2025
+
+# raw:
+attack_scenarios
+  as_1.py
+  as_2.py
+placeholder_blocklist.txt

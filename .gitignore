@@ -1,2 +1,8 @@
 /preparation/*
-/testing/*
+*.xml
+.env
+demonstration/00_ToDos.txt
+demonstration/verbose.py
+/demonstration/data_sources/pdp_source_1.db
+/demonstration/testing/testing.py
+/demonstration/dump
