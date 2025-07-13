@@ -49,7 +49,7 @@ def _check_params_subject(
             if log:
                 print(f'\tcheck_params_subject -> pdp_os.is_required_param_valid: {k} for {sid}')
             param_to_check: str = data_subject['properties'][k]
-            is_valid = pdp_os.is_required_param_valid(k, param_to_check, sid, data_subject, log)
+            is_valid = pdp_os.is_required_param_valid(k, param_to_check, sid, log)
             response_pep['subject'][k] = 'valid' if is_valid else 'invalid'
         except KeyError:
             response_pep['subject'][k] = 'error'

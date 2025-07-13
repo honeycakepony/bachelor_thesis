@@ -1,5 +1,9 @@
 import sqlite3
 
+# -------------------------------------------------------------------
+# No need to run this if 'pdp_source_1.db' is working on your machine
+# -------------------------------------------------------------------
+
 ### setup
 conn = sqlite3.connect('pdp_source_1.db')
 c = conn.cursor()

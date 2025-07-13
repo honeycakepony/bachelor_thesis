@@ -17,7 +17,7 @@ CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(CURR_DIR, 'data_sources', 'pdp_source_1.db')
 # -------------------------------------------------------
 
-def is_required_param_valid(param: any, param_to_check: str, sid: str, data_subject: dict, log=False) -> bool:
+def is_required_param_valid(param: any, param_to_check: str, sid: str, log=False) -> bool:
     """
     Check the validity of a single mandatory parameter by referring to the corresponding policy of the organisation.
     :return: Value determined by check of policy of parameter. If check fails, return False by default.

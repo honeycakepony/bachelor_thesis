@@ -1,0 +1,30 @@
+Content Structure:
+
+demonstration/
+├── classes/
+│   ├── action.py
+│   ├── machine.py
+│   ├── resource.py
+│   ├── subject.py
+│   └── user.py
+├── data_sources/
+│   ├── database.py
+│   └── pdp_source_1.db
+├── testing/
+# ------------------------------------------------------------------------
+# note: the tests represent the PEP which connects to the PDP
+# -------------------------------------------------------------------------
+│   ├── test_as_ra.py
+│   ├── test_as_sc.py
+│   ├── test_as_sh.py
+│   └── test_pdp.py
+├── content_structure.txt
+# ------------------------------------------------------------------------
+# note: the following 3 files make up the PDP of the implementation
+# -------------------------------------------------------------------------
+├── pdp_main_functions
+├── pdp_wrapper_functions
+├── pdp_organisation_specific
+└── README.md
+
+# Content structure created using https://tree.nathanfriend.com/, last access 13 July 2025

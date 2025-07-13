@@ -115,7 +115,7 @@ def check_update():
                 is_valid = pdp_os.is_required_param_valid(
                     updated_data['subject']['properties'][param_to_check], param_to_check,
                     updated_data['subject']['id'],
-                    updated_data, log=True)
+                    log=True)
                 response_pep['subject'][param_to_check] = 'valid' if is_valid else 'invalid'
         required_params_subject_log.append(updated_data['subject']['properties'])
         optional_params_subject_log.append(dict())
