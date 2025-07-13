@@ -1,7 +1,6 @@
 from flask import Flask, abort, request, jsonify
 from deepdiff import DeepDiff
 from requests import Response
-from http_status_code_exception.client_error import BadRequest
 from pdp_wrapper_functions import _check_params_subject
 
 import pdp_organisation_specific as pdp_os
@@ -13,7 +12,6 @@ app = Flask(__name__)
 DEFAULT_PARAM: str = 'False'
 REQUIRED_PARAMS_SUBJECT: dict[str, str] = {
     'fingerprint': DEFAULT_PARAM,
-    'ip_address': DEFAULT_PARAM,
     'device_id': DEFAULT_PARAM,
     'user_session': DEFAULT_PARAM,
     'requested_ports': DEFAULT_PARAM

@@ -1,4 +1,6 @@
 import unittest
+from copy import deepcopy
+
 import requests
 
 URL = 'http://127.0.0.1:2111/'
@@ -6,11 +8,10 @@ URL = 'http://127.0.0.1:2111/'
 # setup
 subject: dict = {
     'type': 'user',
-    'id': 'ethan@mission−thesis.org',
+    'id': 'gabriel@mission−thesis.org',
     'properties': {
-        # fingerprint of attacker
         'fingerprint': 'fef2e6094100944eb27f5aa88f3fe110ce2a7066d0d68256c1ec621776339349',
-        'ip_address': '217.233.97.120',
+        'ip_address': '210.30.1.241',
         'device_id': '2:42:aa:e8:8d:0c',
         'user_session': 'hHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f',
         'requested_ports': '443'
@@ -27,7 +28,8 @@ resource: dict = {
 }
 
 context: dict = {
-    'time': 'Wed Jun 25 14:57:55 CEST 2025'
+    # todo: adjust to times mentioned in BHT_Akira
+    'time': 'Wed Feb 25 14:57:55 CEST 2024'
 }
 
 access_request: dict = {
@@ -37,34 +39,45 @@ access_request: dict = {
     'context': context
 }
 
-class TestAttackScenarioSC(unittest.TestCase):
+# usage could be run against 'normal' user behaviour,
+# how often are requests typcially made from outside
+
+# perhaps fingerprint oder device_id match
+
+# 2024-02-14 13:15:48 - lab1_pc1_acc1 using RDP
+# 2024-02-14 13:22:44 - lab1-pc1_acc2 using RDP
+# 2024-02-14 13:57:56 - lab2-pc1 using RDP
+# 2024-02-16 11:38:42 - hrz-computer2 using RDP
+# 2024-02-16 11:54:49 - hrz-computer3 using RDP
+# 2024-02-16 11:54:49 - hrz-computer4 using RDP
+# 2024-02-19 08:28:30 - lab_acc using RDP
+# 2024-02-19 09:11:38 - lab2-pc1 using RDP
+# 2024-02-20 06:54:24 - lab1-pc2 using RDP
+# 2024-02-20 07:20:56 - hrz-computer1 using RDP
+
+
+class TestAttackScenarioRA(unittest.TestCase):
     # ------------------
     # Parametrised
     # ------------------
-    def test_param_sc_attacker(self):
-        # stolen credentials do not match subject fingerprint or device_id of attacker
-        response = requests.get(URL + 'check_params',
-                                params={'parametrised': True, 'drop_ok': False},
-                                json=access_request)
-        self.assertEqual(200, response.status_code)
-        self.assertEqual(False, response.json()['decision'])
-        self.assertTrue(response.json()['message']['subject']['fingerprint'] == 'invalid' or
-                        response.json()['message']['subject']['device_id'] == 'invalid')
-        self.assertEqual('valid', response.json()['message']['subject']['type'])
-        self.assertEqual('valid', response.json()['message']['subject']['id'])
-
-    # ------------------
-    # Non-parametrised
-    # ------------------
-    def test_nonparam_sc_attacker(self):
-        # stolen credentials not detected as suspicious
+    def test_param_ra_attacker(self):
+        # changed subject user_session mid-session detected -> possibly re-authentication and re-authorisation necessary
         response = requests.get(URL + 'check_params',
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request)
         self.assertEqual(200, response.status_code)
         self.assertEqual(True, response.json()['decision'])
-        self.assertEqual('valid', response.json()['message']['subject']['type'])
-        self.assertEqual('valid', response.json()['message']['subject']['id'])
+
+
+    # ------------------
+    # Non-parametrised
+    # ------------------
+    def test_nonparam_ra_attacker(self):
+        response = requests.get(URL + 'check_params',
+                                params={'parametrised': False, 'drop_ok': False},
+                                json=access_request)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(True, response.json()['decision'])
 
 if __name__ == '__main__':
     unittest.main()

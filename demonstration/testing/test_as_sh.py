@@ -39,7 +39,9 @@ access_request: dict = {
 }
 
 class TestAttackScenarioSH(unittest.TestCase):
+    # ------------------
     # Parametrised
+    # ------------------
     def test_param_sh_attacker(self):
         # changed subject user_session mid-session detected -> possibly re-authentication and re-authorisation necessary
         response = requests.get(URL + 'check_params',
@@ -58,7 +60,9 @@ class TestAttackScenarioSH(unittest.TestCase):
         self.assertEqual(False, response.json()['decision'])
 
 
+    # ------------------
     # Non-parametrised
+    # ------------------
     def test_nonparam_sh_attacker(self):
         # change of subject user_session is not detected
         # Note: 'check_update' is not used for the non-parametrised API version this function invocation is for
