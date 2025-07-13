@@ -10,7 +10,6 @@ subject: dict = {
     'properties': {
         # fingerprint of attacker
         'fingerprint': 'fef2e6094100944eb27f5aa88f3fe110ce2a7066d0d68256c1ec621776339349',
-        'ip_address': '217.233.97.120',
         'device_id': '2:42:aa:e8:8d:0c',
         'user_session': 'hHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f',
         'requested_ports': '443'

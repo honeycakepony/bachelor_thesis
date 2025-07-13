@@ -11,7 +11,6 @@ subject: dict = {
     'id': 'gabriel@mission−thesis.org',
     'properties': {
         'fingerprint': 'fef2e6094100944eb27f5aa88f3fe110ce2a7066d0d68256c1ec621776339349',
-        'ip_address': '210.30.1.241',
         'device_id': '2:42:aa:e8:8d:0c',
         'user_session': 'hHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f',
         'requested_ports': '443'

@@ -14,7 +14,7 @@ BLOCK_LIST_COUNTIES: set[str] = {
 
 ALLOW_LIST_PORTS: set[int] = {
     443, # HTTPS
-    3389, # RDP
+    3389 # RDP
 }
 
 ALLOW_LIST_STYPES: set[str] = {
@@ -98,9 +98,11 @@ def is_valid_stype(stype: str, log=False) -> bool:
     return result
 
 def _is_valid_requested_ports(param_to_check: str, log=False) -> bool:
-    if param_to_check in ALLOW_LIST_PORTS:
+    if int(param_to_check) in ALLOW_LIST_PORTS:
         if log:
             print(f'\t\t\t\t_is_valid_requested_ports: \'{param_to_check}\' is valid? \'True\'')
+            if int(param_to_check) == 3389:
+                print(f'\t\t\t\tCAUTION: remote access via RDP')
         return True
 
     if log:

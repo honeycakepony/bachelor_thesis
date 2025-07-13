@@ -39,11 +39,6 @@ def _check_params_subject(
         response_pep['subject']['id'] = 'error'
         return response_pep, None, None, True, True
 
-    # todo: check_params_subject
-    #       parametrised == False
-    #       drop_args    == False
-    #       drop_args    == True
-
     is_valid: bool = True
     required_params_subject: dict = deepcopy(candidate_params)
     optional_params_subject: dict = {}
