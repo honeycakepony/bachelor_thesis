@@ -52,8 +52,6 @@ class TestAttackScenarioRA(unittest.TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(True, response.json()['decision'])
 
-
-
     # ------------------
     # Non-parametrised
     # ------------------
@@ -63,6 +61,7 @@ class TestAttackScenarioRA(unittest.TestCase):
                                 json=access_request)
         self.assertEqual(200, response.status_code)
         self.assertEqual(True, response.json()['decision'])
+
 
 if __name__ == '__main__':
     unittest.main()

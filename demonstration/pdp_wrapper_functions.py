@@ -2,8 +2,8 @@ import pdp_organisation_specific as pdp_os
 from copy import deepcopy
 
 
-# Note: The internal functionality of the helper functions is non-normative functionality and a more sophisticated
-#       implementation is to be expected in a real implementation.
+# Note: The internal functionality of the helper functions is sample functionality and a more sophisticated
+#       implementation is to be expected in a real-world implementation.
 #       Many checks are kept simple for illustrative purposes.
 
 def _check_params_subject(
@@ -58,11 +58,3 @@ def _check_params_subject(
         return response_pep, required_params_subject, optional_params_subject, False, False
 
     return response_pep, None, None, False, True
-
-    # SUBJECT all other properties
-    # todo: check_params_subject
-    #       parametrised == False
-    #       drop_args    == False
-    #       drop_args    == True
-    #       if flag_error_or_invalid:
-    #           return 'Error' or 'Access denied'

@@ -4,7 +4,6 @@ from requests import Response
 import demonstration.pdp_organisation_specific as pdp_os
 
 from demonstration.classes.action import Action
-from demonstration.classes.context import Context
 from demonstration.classes.resource import Resource
 from demonstration.classes.user import User
 from demonstration.classes.machine import Machine
@@ -31,6 +30,7 @@ def response_wrapper_non_param(access_request: dict) -> Response:
         params={'parametrised': False},
         json=access_request
     )
+
 
 class TestPDP(unittest.TestCase):
     # SUBJECT id type
@@ -193,11 +193,6 @@ class TestPDP(unittest.TestCase):
         user_invalid.user_session = 'aHQWx3VGAmhlsATTxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
         response: bool = pdp_os._is_valid_session_id(user_invalid.id, user_invalid.user_session, log=True)
         self.assertFalse(response)  # 'user_invalid.user_session' invalid
-
-    # todo:
-    #   - check_required_params
-    #   - handle_access_request
-    #   - check_update
 
 
 if __name__ == '__main__':

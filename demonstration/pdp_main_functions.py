@@ -106,6 +106,7 @@ def check_update():
         for path in diff.affected_paths:
             if not is_valid:
                 break
+            # this RegEx was created using ChatGPT -> see Appendix B
             matches: list[str] = re.findall("'([^']+)'", path)
             param_to_check: str = matches[-1]
             if param_to_check in set(required_params_subject.keys()):
