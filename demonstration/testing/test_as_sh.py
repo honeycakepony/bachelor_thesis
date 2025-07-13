@@ -1,6 +1,6 @@
-import unittest
 from copy import deepcopy
 
+import unittest
 import requests
 
 URL = 'http://127.0.0.1:2111/'
@@ -37,6 +37,7 @@ access_request: dict = {
     'context': context
 }
 
+
 class TestAttackScenarioSH(unittest.TestCase):
     # ------------------
     # Parametrised
@@ -50,14 +51,14 @@ class TestAttackScenarioSH(unittest.TestCase):
         self.assertEqual(True, response.json()['decision'])
         # hijack session -> user_session of hijacked session
         access_request_change = deepcopy(access_request)
-        access_request_change['subject']['properties']['user_session'] = 'gHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
+        access_request_change['subject']['properties'][
+            'user_session'] = 'gHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
         response = requests.get(URL + 'check_update',
                                 params={'parametrised': True, 'drop_ok': False},
                                 json=access_request_change)
         print(f'The following change was detected: {response.json()['message']['subject']}')
         self.assertEqual(403, response.status_code)
         self.assertEqual(False, response.json()['decision'])
-
 
     # ------------------
     # Non-parametrised
@@ -73,12 +74,14 @@ class TestAttackScenarioSH(unittest.TestCase):
         self.assertEqual(True, response.json()['decision'])
         # hijack session -> user_session of hijacked session
         access_request_change = deepcopy(access_request)
-        access_request_change['subject']['properties']['user_session'] = 'gHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
+        access_request_change['subject']['properties'][
+            'user_session'] = 'gHQWx3VGAmhlsUDSxAWkuAmWgSDR4FW5dwCtkW2Glt9HQU8f'
         response = requests.get(URL + 'check_update',
                                 params={'parametrised': False, 'drop_ok': False},
                                 json=access_request_change)
         self.assertEqual(200, response.status_code)
         self.assertEqual(True, response.json()['decision'])
+
 
 if __name__ == '__main__':
     unittest.main()

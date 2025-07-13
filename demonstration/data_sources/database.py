@@ -1,9 +1,5 @@
 import sqlite3
 
-# Note:
-#       IPv4 addresses found using https://whatismyipaddress.com/, last access 6 June 2025
-#
-
 ### setup
 conn = sqlite3.connect('pdp_source_1.db')
 c = conn.cursor()

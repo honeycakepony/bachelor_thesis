@@ -20,7 +20,7 @@ def _check_params_subject(
     # Note:
     # "type: REQUIRED. A string value that specifies the type of the Subject."
     # "id: REQUIRED. A string value containing the unique identifier of the Subject, scoped to the type."
-    # Source: OpenID AuthZEN, 2025, section 5.1 -> see Bibliography of thesis
+    # Source: openid2025authorization, see section 5.1 -> see Bibliography of thesis
     try:
         stype, sid = data_subject['type'], data_subject['id']
         stype_valid: bool = pdp_os.is_valid_stype(stype, log)

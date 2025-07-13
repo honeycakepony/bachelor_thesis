@@ -36,6 +36,7 @@ access_request: dict = {
     'context': context
 }
 
+
 class TestAttackScenarioSC(unittest.TestCase):
     # ------------------
     # Parametrised
@@ -64,6 +65,7 @@ class TestAttackScenarioSC(unittest.TestCase):
         self.assertEqual(True, response.json()['decision'])
         self.assertEqual('valid', response.json()['message']['subject']['type'])
         self.assertEqual('valid', response.json()['message']['subject']['id'])
+
 
 if __name__ == '__main__':
     unittest.main()

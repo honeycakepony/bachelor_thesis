@@ -2,8 +2,8 @@ import sqlite3
 import os
 
 ALLOW_LIST_PORTS: set[int] = {
-    443, # HTTPS
-    3389 # RDP
+    443,  # HTTPS
+    3389  # RDP
 }
 
 ALLOW_LIST_STYPES: set[str] = {
@@ -11,8 +11,11 @@ ALLOW_LIST_STYPES: set[str] = {
     'machine'
 }
 
+# -------------------------------------------------------
+# the next two lines of code were created using PyCharm AI -> see Appendix B
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(CURR_DIR, 'data_sources', 'pdp_source_1.db')
+# -------------------------------------------------------
 
 def is_required_param_valid(param: any, param_to_check: str, sid: str, data_subject: dict, log=False) -> bool:
     """
@@ -42,6 +45,7 @@ def is_required_param_valid(param: any, param_to_check: str, sid: str, data_subj
 
     return False
 
+
 def is_valid_sid(sid: str, stype: str, log=False) -> bool:
     """
     Check whether 'id' is known in database.
@@ -68,6 +72,7 @@ def is_valid_stype(stype: str, log=False) -> bool:
         print(f'\t_is_valid_stype: \'{stype}\' is valid? \'{result}\'')
     return result
 
+
 def _is_valid_requested_ports(param_to_check: str, log=False) -> bool:
     if int(param_to_check) in ALLOW_LIST_PORTS:
         if log:
@@ -79,6 +84,7 @@ def _is_valid_requested_ports(param_to_check: str, log=False) -> bool:
     if log:
         print(f'\t\t\t\t_is_valid_requested_ports: \'{param_to_check}\' is valid? \'False\'')
     return False
+
 
 def _is_valid_device_id(sid: str, device_id: str, log=False) -> bool:
     conn = sqlite3.connect(DB_PATH)
@@ -92,56 +98,6 @@ def _is_valid_device_id(sid: str, device_id: str, log=False) -> bool:
 
     if log:
         print(f'\t\t\t\t_is_valid_device_id: \'{device_id}\' is valid? \'False\'')
-    return False
-
-
-def _is_valid_geolocation(geolocation: str, ip: str, log=False) -> bool:
-    """
-    Checks whether an IP address is contained in blocklist, i.e. whether the geolocation via lookup is considered valid.
-    :return: True if IP is allowed access, False if IP is on blocklist.
-    """
-    handler = ipinfo.getHandler(IPINFO_KEY)
-    details = handler.getDetails(ip)
-    if geolocation:
-        if geolocation != details.country_name:
-            if log:
-                print(f'\t\t\t\t_is_valid_geolocation: {geolocation} != {details.country_name}')
-            return False
-
-    if log:
-        print(f'\t\t\t\t_is_valid_geolocation: country found in blocklist? {details.country_name not in BLOCK_LIST_COUNTIES}')
-    return details.country_name not in BLOCK_LIST_COUNTIES
-
-
-def _is_valid_ip(sid: str, ip: str, log=False) -> bool:
-    """
-    Checks 1) whether an IP address is contained in blocklist, 2) whether IP address is known for subject.
-    :return: True if IP is allowed access (known in database in this case), False if IP is on blocklist or unknown.
-    """
-    # 1) check against blocklist
-    with open('data_sources/ipv4_placeholder_blocklist.txt') as f:
-        # this logic is very roughy and is only used for its simplicity for illustrative purposes
-        for line in f:
-            ip_temp = '.'.join(ip.split('.')[0:3])
-            line = '.'.join(line.split('.')[0:3])
-            if ip_temp == line:
-                if log:
-                    print(f'_is_valid_ip: IP {ip_temp} found on blocklist.\n')
-                return False
-
-    # 2) lookup in database
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT * FROM subjects WHERE id=? AND ip_address=?", (sid, ip))
-    if c.fetchone() is not None:
-        conn.close()
-        if log:
-            print(f'\t\t\t\t_is_valid_ip: \'{ip}\' is valid? \'True\'')
-        return True
-
-    # add IP address after validity check according to policy of organisation
-    if log:
-        print(f'\t\t\t\t_is_valid_ip: \'{ip}\' is valid? \'False\'')
     return False
 
 
