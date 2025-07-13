@@ -3,8 +3,11 @@ This repository is used for my code base which I use for my bachelor thesis on i
 For this, I'm building upon the [Special Publication from the National Institute of Standards and Technology](https://www.nist.gov/publications/zero-trust-architecture) and the ongoing effort of the [Authorization API](https://openid.github.io/authzen/authorization-api-1_1_01), which is currently developed by the AuthZen Working Group as part of the OpenID Foundation.<br /> 
 <b>Note</b>: The code in this repository is experimental and represents the submission state of my bachelor thesis.
 
-<h2>Run the Code on your System</h2>
+<h2>Content of this Repository</h2>
+To get a quick overview of all files and folders in this repository, check out `content_structure.txt` first.<br>
+Note: Comments to relevant sections of the code can be found in some files in this repository. 
 
+<h2>Run the Code on your System</h2>
 Navigate into the 'demonstration' folder and run `python3 pdp_main_functions.py` in one terminal. 
 The server, i.e. the PDP, responds '* Running on http://127.0.0.1:2111'. 
 Please make sure that all modules which are imported in the practical implementation have to be installed on your system.
